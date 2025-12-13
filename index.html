@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FireLog Lite v4.2</title>
+    <title>FireLog Lite v4.3</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
         tailwind.config = { darkMode: 'class' }
@@ -15,23 +16,15 @@
 
     <style>
         /* --- 核心樣式 --- */
-        :root {
-            --bg-body: #f8fafc; --surface: #ffffff; --border: #e2e8f0; --text-main: #334155; --text-sub: #64748b;
-        }
-        .dark {
-            --bg-body: #020617; --surface: #1e293b; --border: #334155; --text-main: #f8fafc; --text-sub: #94a3b8;
-        }
+        :root { --bg-body: #f8fafc; --surface: #ffffff; --border: #e2e8f0; --text-main: #334155; --text-sub: #64748b; }
+        .dark { --bg-body: #020617; --surface: #1e293b; --border: #334155; --text-main: #f8fafc; --text-sub: #94a3b8; }
 
         body { 
             font-family: 'Inter', -apple-system, sans-serif; 
-            background-color: var(--bg-body); 
-            color: var(--text-main);
-            user-select: none; 
-            -webkit-tap-highlight-color: transparent; 
-            padding-bottom: 110px !important; 
-            transition: background-color 0.3s;
+            background-color: var(--bg-body); color: var(--text-main);
+            user-select: none; -webkit-tap-highlight-color: transparent; 
+            padding-bottom: 110px !important; transition: background-color 0.3s;
         }
-        
         .font-mono { font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px; }
 
         /* 視圖切換 */
@@ -49,24 +42,16 @@
         .nav-btn.active { color: #3b82f6; opacity: 1; } .dark .nav-btn.active { color: #60a5fa; }
         .nav-btn.active i { transform: translateY(-2px); }
 
-        /* 輸入框 & 搜尋框修復 */
+        /* 輸入框 */
         input, textarea, select {
             background: var(--surface); border: 1px solid var(--border); color: var(--text-main);
-            border-radius: 10px; padding: 12px; width: 100%; 
-            font-size: 16px; transition: 0.2s;
+            border-radius: 10px; padding: 12px; width: 100%; font-size: 16px; transition: 0.2s;
         }
         input:focus, textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15); }
 
         /* 搜尋框容器 */
         .search-wrapper { position: relative; width: 100%; }
-        .search-icon { 
-            position: absolute; 
-            left: 12px; 
-            top: 50%; 
-            transform: translateY(-50%); 
-            color: #94a3b8; 
-            pointer-events: none;
-        }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
         .search-input { padding-left: 40px !important; }
 
         /* 按鈕系統 */
@@ -80,20 +65,16 @@
         .sys-btn.active { background: #334155; color: #fff; border-color: #334155; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .dark .sys-btn.active { background: #3b82f6; border-color: #3b82f6; }
 
-        /* 卡片與列表 (防爆版) */
+        /* 卡片與列表 */
         .log-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-            padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: transform 0.1s;
-            overflow: hidden; /* 關鍵：防止內容溢出 */
-            display: flex; flex-direction: column; gap: 4px;
+            padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: transform 0.1s, border-color 0.2s;
+            overflow: hidden; display: flex; flex-direction: column; gap: 4px; position: relative;
         }
         .log-card:active { transform: scale(0.98); background: #f8fafc; }
+        .dark .log-card:active { background: #1e293b; }
         .border-l-fire { border-left: 4px solid #ef4444; }
         .border-l-ems { border-left: 4px solid #0d9488; }
-        
-        .card-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .card-title { font-weight: 700; font-size: 1.1rem; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .card-sub { font-size: 0.85rem; color: var(--text-sub); font-family: 'JetBrains Mono', monospace; display: flex; gap: 8px; align-items: center;}
 
         /* Tag Scroll */
         .tag-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
@@ -102,13 +83,21 @@
         .dark .tag-btn.active { background: #3b82f6; border-color: #3b82f6; }
 
         /* Toast */
-        .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-100px); background: #0f172a; color: white; padding: 12px 24px; rounded: 99px; font-size: 0.9rem; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 100; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); white-space: nowrap;}
+        .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-100px); background: #0f172a; color: white; padding: 10px 20px; rounded: 99px; font-size: 0.9rem; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.4s; z-index: 100; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); white-space: nowrap;}
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(20px); }
+        .dark .toast { background: #f8fafc; color: #0f172a; }
 
-        /* 編輯模式 */
+        /* 編輯模式樣式 */
         .check-overlay { display: none; }
-        .edit-mode .check-overlay { display: flex; }
-        .edit-mode .log-card { transform: scale(0.96); opacity: 0.8; }
+        .edit-mode .check-overlay { 
+            display: flex; position: absolute; inset: 0; 
+            background: rgba(255,255,255,0.6); 
+            z-index: 10; align-items: center; justify-content: flex-end; padding-right: 16px;
+        }
+        .dark .edit-mode .check-overlay { background: rgba(0,0,0,0.6); }
+        .edit-mode .log-card { border-color: #cbd5e1; }
+        .log-card.selected { border-color: #3b82f6; background: #eff6ff; }
+        .dark .log-card.selected { background: #1e293b; border-color: #3b82f6; }
     </style>
 </head>
 <body class="transition-colors duration-300">
@@ -121,7 +110,7 @@
             <div class="w-1.5 h-6 bg-blue-600 rounded-sm"></div>
             <div>
                 <h1 class="font-bold tracking-tight text-sm uppercase text-slate-500 dark:text-slate-400">Duty Log</h1>
-                <div class="font-mono text-xs font-bold leading-none tracking-wide">LITE v4.2</div>
+                <div class="font-mono text-xs font-bold leading-none tracking-wide">LITE v4.3</div>
             </div>
         </div>
         <button onclick="toggleTheme()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition border border-slate-200 dark:border-slate-700">
@@ -129,7 +118,7 @@
         </button>
     </div>
 
-    <!-- 1. Dashboard (首頁) -->
+    <!-- 1. Dashboard -->
     <div id="viewDashboard" class="view-panel active container mx-auto p-4 max-w-lg">
         <div class="grid grid-cols-2 gap-4 mb-6">
             <div onclick="switchView('viewFire')" class="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-red-500 shadow-sm active:scale-95 transition cursor-pointer flex flex-col items-center gap-2 group relative overflow-hidden">
@@ -220,6 +209,7 @@
             <button onclick="switchView('viewDashboard')" class="w-9 h-9 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-slate-500"><i class="fa-solid fa-arrow-left"></i></button>
             <h2 class="text-lg font-bold text-slate-800 dark:text-white">新增救護</h2>
         </div>
+
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 space-y-4">
             <div class="space-y-3">
                 <div class="flex gap-2">
@@ -256,7 +246,7 @@
     <div id="viewHistory" class="view-panel container mx-auto p-4 max-w-lg">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-slate-800 dark:text-white">勤務資料庫</h2>
-            <button id="editToggleBtn" onclick="toggleEditMode()" class="text-xs font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800">編輯</button>
+            <button id="editToggleBtn" onclick="toggleEdit()" class="text-xs font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800">編輯</button>
         </div>
 
         <div class="flex gap-2 mb-3">
@@ -268,15 +258,14 @@
             </div>
         </div>
 
-        <!-- 修正的搜尋框 (垂直置中) -->
         <div class="search-wrapper mb-4">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input type="text" id="searchInput" onkeyup="renderList()" placeholder="搜尋日期、地點、類別..." class="search-input">
+            <input type="text" id="searchInput" onkeyup="renderList()" placeholder="搜尋..." class="search-input">
         </div>
 
         <div id="historyList" class="space-y-3 pb-20"></div>
 
-        <!-- 批量刪除 -->
+        <!-- 批量刪除工具列 -->
         <div id="batchAction" class="fixed bottom-[80px] left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 shadow-lg border-t dark:border-slate-700 z-40 hidden">
             <div class="container mx-auto max-w-lg flex justify-between items-center">
                 <span class="text-sm font-bold text-slate-600 dark:text-slate-300">已選 <span id="selectCount" class="text-red-500">0</span> 筆</span>
@@ -315,7 +304,7 @@
         window.onload = () => {
             if(isDark) document.documentElement.classList.add('dark');
             updateIcon(); updateDash(); 
-            // 修正：不預設帶入月份，確保顯示所有資料
+            // 修正：不預設月份，顯示全部資料
             document.getElementById('monthFilter').value = ""; 
             updateStorage();
         };
@@ -323,6 +312,7 @@
         function toggleTheme() { isDark=!isDark; document.documentElement.classList.toggle('dark'); localStorage.setItem('fireTheme', isDark?'dark':'light'); updateIcon(); }
         function updateIcon() { document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; }
         function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toastMsg').innerText=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+        function vibrate() { if(navigator.vibrate) navigator.vibrate(5); }
 
         function switchView(id) {
             document.querySelectorAll('.view-panel').forEach(e=>e.classList.remove('active'));
@@ -341,15 +331,13 @@
             }
             if(id==='viewHistory') {
                 document.getElementById('searchInput').value = '';
-                // 每次進入列表強制清空月份篩選，避免看不到資料
-                document.getElementById('monthFilter').value = "";
+                document.getElementById('monthFilter').value = ""; // 清空篩選以顯示所有資料
                 renderList();
             }
             if(id==='viewDashboard') updateDash();
             if(id!=='viewHistory') { isEdit=false; selIds.clear(); updateEditUI(); }
         }
 
-        // Reset Forms
         function resetForm(vid) {
             document.querySelectorAll(`#${vid} input:not([type=hidden])`).forEach(i=>i.value='');
             document.querySelectorAll(`#${vid} textarea`).forEach(i=>i.value='');
@@ -358,12 +346,9 @@
             if(vid==='viewEms') { document.getElementById('emsType').value=''; }
         }
 
-        // Logic
-        function setBtn(btn, id) { Array.from(btn.parentElement.children).forEach(c=>c.classList.remove('active')); btn.classList.add('active'); document.getElementById(id).value=btn.innerText; if(navigator.vibrate) navigator.vibrate(5); }
+        function setBtn(btn, id) { Array.from(btn.parentElement.children).forEach(c=>c.classList.remove('active')); btn.classList.add('active'); document.getElementById(id).value=btn.innerText; vibrate(); }
         function setEmsType(btn) { setBtn(btn,'emsType'); }
-        function setGCS(type, val, btn) { document.getElementById('val'+type).value=val; Array.from(btn.parentElement.children).forEach(c=>c.classList.remove('active')); btn.classList.add('active'); if(navigator.vibrate) navigator.vibrate(5); }
-        function addTag(txt) { const n=document.getElementById('emsNote'); n.value+=(n.value?'，':'')+txt; }
-        function setNow(id) { const n=new Date(); n.setMinutes(n.getMinutes()-n.getTimezoneOffset()); document.getElementById(id).value=n.toISOString().slice(0,16); }
+        function setNow(id) { const n=new Date(); n.setMinutes(n.getMinutes()-n.getTimezoneOffset()); document.getElementById(id).value=n.toISOString().slice(0,16); vibrate(); }
         function getGPS(id) { if(!navigator.geolocation)return alert('無法定位'); navigator.geolocation.getCurrentPosition(p=>{const c=`${p.coords.latitude.toFixed(4)},${p.coords.longitude.toFixed(4)}`;const i=document.getElementById(id);i.value=i.value?i.value+` (${c})`:c;},e=>alert('定位失敗')); }
         
         function saveFire() {
@@ -373,7 +358,7 @@
         }
         function saveEms() {
             if(!document.getElementById('emsType').value) return alert('請選擇類型');
-            const l = { id: Date.now(), cat:'ems', date:document.getElementById('emsDate').value, type:document.getElementById('emsType').value, loc:document.getElementById('emsLocation').value, main:document.getElementById('emsReason').value, to:document.getElementById('emsHospital').value, note:document.getElementById('emsNote').value, vitals: `SpO2:${document.getElementById('vitalSpo2').value||'-'}% BP:${document.getElementById('vitalBp').value||'-'} HR:${document.getElementById('vitalHr').value||'-'}` };
+            const l = { id: Date.now(), cat:'ems', date:document.getElementById('emsDate').value, type:document.getElementById('emsType').value, loc:document.getElementById('emsLocation').value, main:document.getElementById('emsReason').value, to:document.getElementById('emsHospital').value, note:document.getElementById('emsNote').value };
             pushLog(l, 'viewEms');
         }
         function pushLog(l, formId) {
@@ -381,12 +366,11 @@
                 logs.unshift(l); localStorage.setItem('fireLogLite', JSON.stringify(logs)); 
                 resetForm(formId); 
                 showToast('已儲存，可繼續輸入'); 
-                // 儲存後不跳轉，但確保重新整理數據
+                // 儲存後強制重新整理列表與資料
                 updateDash();
             } catch(e) { alert('儲存空間不足'); }
         }
 
-        // Dashboard
         function updateDash() {
             document.getElementById('dashTotal').innerText = logs.length;
             const nFire = logs.filter(l=>l.cat==='fire').length;
@@ -422,14 +406,11 @@
         }
 
         function renderList() {
-            const list = document.getElementById('historyList'); 
-            const key = document.getElementById('searchInput').value.toLowerCase(); 
-            const month = document.getElementById('monthFilter').value; // YYYY-MM
+            const list = document.getElementById('historyList'); const key = document.getElementById('searchInput').value.toLowerCase(); const month = document.getElementById('monthFilter').value;
             list.innerHTML = ''; list.className = isEdit ? 'space-y-3 edit-mode' : 'space-y-3';
             
             const filtered = logs.filter(l => {
                 if(currentFilter!=='all' && l.cat!==currentFilter) return false;
-                // 如果 month 有值才篩選，空白則顯示所有
                 if(month && !l.date.startsWith(month)) return false;
                 return JSON.stringify(l).toLowerCase().includes(key);
             });
@@ -437,41 +418,78 @@
             if(filtered.length===0) { list.innerHTML='<div class="text-center text-gray-400 mt-10">無資料</div>'; return; }
 
             filtered.forEach(l => {
-                // 優化：拆分日期與時間，避免擠壓
                 const dateParts = l.date.split('T');
-                const dateStr = dateParts[0]; // YYYY-MM-DD
-                const timeStr = dateParts[1]; // HH:mm
+                const dateStr = dateParts[0];
+                const timeStr = dateParts[1];
                 
                 const clr = l.cat==='fire'?'border-l-fire':'border-l-ems';
                 const tag = l.cat==='fire'?'text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded':'text-teal-500 bg-teal-50 dark:bg-teal-900/20 px-2 py-0.5 rounded';
                 const sub = l.cat==='fire'?`${l.car||'-'} | ${l.res||'-'}` : `${l.main||'-'} > ${l.to||'-'}`;
                 const sel = selIds.has(l.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700';
+                const selectedClass = selIds.has(l.id) ? 'selected' : '';
 
                 list.innerHTML += `
-                    <div onclick="clickItem(${l.id})" class="log-card relative cursor-pointer transition ${sel} ${clr}">
-                        <div class="check-overlay absolute inset-0 bg-white/50 dark:bg-black/50 items-center justify-end pr-4 ${selIds.has(l.id)?'opacity-100':'opacity-0'}"><div class="w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center ${selIds.has(l.id)?'bg-blue-500 border-blue-500':''}"><i class="fa-solid fa-check text-white text-xs"></i></div></div>
+                    <div onclick="clickItem(${l.id})" class="log-card relative cursor-pointer transition ${sel} ${clr} ${selectedClass}">
+                        <div class="check-overlay"><div class="w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center ${selIds.has(l.id)?'bg-blue-500 border-blue-500':''}"><i class="fa-solid fa-check text-white text-xs"></i></div></div>
                         
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-[10px] font-bold uppercase tracking-wider ${tag} mt-1">${l.type}</span>
+                        <div class="card-header mb-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider ${tag}">${l.type}</span>
                             <div class="text-right">
                                 <div class="font-mono font-bold text-slate-700 dark:text-slate-300 text-sm">${dateStr}</div>
                                 <div class="font-mono text-xs text-slate-400">${timeStr}</div>
                             </div>
                         </div>
                         <div class="card-title mb-1">${l.loc||'-'}</div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">${sub}</div>
+                        <div class="card-sub truncate">${sub}</div>
                     </div>`;
             });
         }
 
-        function clickItem(id) { if(isEdit) { if(selIds.has(id)) selIds.delete(id); else selIds.add(id); renderList(); document.getElementById('selectCount').innerText=selIds.size; } else { /* No detail view in Lite v4 */ } }
+        function clickItem(id) { 
+            if(isEdit) { 
+                if(selIds.has(id)) selIds.delete(id); else selIds.add(id); 
+                renderList(); 
+                document.getElementById('selectCount').innerText = selIds.size; 
+            } else {
+                // 一般模式下點擊不做動作 (純紀錄版)
+            }
+        }
 
-        function toggleEdit() { isEdit=!isEdit; selIds.clear(); document.getElementById('batchAction').classList.toggle('hidden', !isEdit); document.getElementById('editToggleBtn').innerText = isEdit ? '完成' : '編輯'; renderList(); }
-        function deleteSelected() { if(confirm(`刪除 ${selIds.size} 筆？`)) { logs=logs.filter(l=>!selIds.has(l.id)); localStorage.setItem('fireLogLite', JSON.stringify(logs)); toggleEdit(); renderList(); updateDash(); } }
+        function toggleEdit() {
+            isEdit = !isEdit;
+            selIds.clear();
+            updateEditUI();
+            renderList();
+        }
+
+        function updateEditUI() {
+            const btn = document.getElementById('editToggleBtn');
+            const bar = document.getElementById('batchAction');
+            if (isEdit) {
+                btn.innerText = '完成';
+                btn.classList.add('bg-slate-800', 'text-white');
+                btn.classList.remove('bg-blue-50', 'text-blue-500');
+                bar.classList.remove('hidden');
+            } else {
+                btn.innerText = '編輯';
+                btn.classList.remove('bg-slate-800', 'text-white');
+                btn.classList.add('bg-blue-50', 'text-blue-500');
+                bar.classList.add('hidden');
+            }
+            document.getElementById('selectCount').innerText = '0';
+        }
+
+        function deleteSelected() { 
+            if(confirm(`刪除 ${selIds.size} 筆？`)) { 
+                logs=logs.filter(l=>!selIds.has(l.id)); 
+                localStorage.setItem('fireLogLite', JSON.stringify(logs)); 
+                toggleEdit(); renderList(); updateDash(); 
+            } 
+        }
         function filterType(t, btn) { currentFilter=t; document.querySelectorAll('.tag-btn').forEach(b=>{ b.classList.remove('active','bg-slate-700','text-white'); b.classList.add('bg-white','text-slate-600','border'); }); btn.classList.remove('bg-white','text-slate-600','border'); btn.classList.add('active','bg-slate-700','text-white'); renderList(); }
 
         function exportCSV() { if(!logs.length) return alert('無資料'); let csv = "\uFEFF日期,時間,類別,細項,地點,主訴/結果,送往/車輛,備註\n"; logs.forEach(l=>{ const dt=l.date.split('T'); const row=[dt[0], dt[1], l.cat==='fire'?'火警':'救護', l.type, `"${l.loc}"`, l.cat==='fire'?l.res:l.main, l.cat==='fire'?l.car:l.to, `"${l.cat==='ems'?l.note:''}"`]; csv+=row.join(",")+"\n"; }); const a=document.createElement('a'); a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv); a.download=`FireLog.csv`; document.body.appendChild(a); a.click(); a.remove(); }
-        function exportJSON() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(logs)); a.download=`FireLog_Backup.json`; document.body.appendChild(a); a.click(); a.remove(); }
+        function exportData() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(logs)); a.download=`FireLog_Backup.json`; document.body.appendChild(a); a.click(); a.remove(); }
         function triggerImport(){document.getElementById('importFile').click();}
         function importData(inp) { const f=inp.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ try{ const d=JSON.parse(e.target.result); if(confirm(`還原 ${d.length} 筆？舊資料將被覆蓋！`)){ logs=d; localStorage.setItem('fireLogLite', JSON.stringify(logs)); location.reload(); } } catch(e){alert('檔案錯誤');} }; r.readAsText(f); }
     </script>
