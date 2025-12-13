@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FireLog Pro v4.0</title>
+    <title>FireLog Pro v5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
-        // 設定 Tailwind Dark Mode
         tailwind.config = { darkMode: 'class' }
     </script>
 
     <style>
-        /* 字體與基礎 */
-        body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        /* 基礎設定 */
+        body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
 
         /* 視圖切換動畫 */
@@ -23,47 +22,47 @@
         .view-panel.active { display: block; animation: fadeUpdate 0.2s ease-out; }
         @keyframes fadeUpdate { from { opacity: 0.8; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 按鈕與標籤 */
-        .sys-btn { border: 1px solid #e2e8f0; background: white; color: #475569; transition: all 0.15s; }
+        /* 元件樣式 */
+        .sys-btn { border: 1px solid #e2e8f0; background: white; color: #475569; transition: all 0.1s; }
         .sys-btn.active { background: #334155; color: white; border-color: #334155; font-weight: 600; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
-        
-        /* Dark Mode 適配 */
         .dark .sys-btn { background: #1e293b; border-color: #334155; color: #94a3b8; }
         .dark .sys-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-        .dark .bg-white { background-color: #1e293b; color: #f1f5f9; }
-        .dark .text-slate-800 { color: #f1f5f9; }
-        .dark .text-slate-700 { color: #e2e8f0; }
-        .dark .text-slate-600 { color: #cbd5e1; }
-        .dark .text-slate-500 { color: #94a3b8; }
-        .dark .text-slate-400 { color: #64748b; }
-        .dark .border-slate-200 { border-color: #334155; }
-        .dark .bg-slate-50 { background-color: #0f172a; }
-        .dark .bg-slate-100 { background-color: #020617; }
-        .dark input, .dark textarea, .dark select { background-color: #0f172a; border-color: #334155; color: white; }
         
-        /* 玻璃擬態 Header */
         .glass-header { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); }
+        .photo-preview { background-size: cover; background-position: center; }
+
+        /* 戰術畫板 Grid */
+        .tac-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; background: #334155; padding: 2px; border-radius: 4px; }
+        .tac-cell { aspect-ratio: 1; background: #1e293b; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: background 0.1s; }
+        .tac-cell:active { background: #475569; }
         
-        /* 編輯模式 Checkbox */
+        /* 戰術圖示顏色 */
+        .icon-fire { color: #ef4444; animation: pulse 1.5s infinite; }
+        .icon-water { color: #3b82f6; }
+        .icon-car { color: #f87171; }
+        .icon-ems { color: #34d399; }
+        .icon-victim { color: #facc15; }
+        .icon-smoke { color: #94a3b8; opacity: 0.7; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        /* 編輯選單 */
         .check-overlay { display: none; }
         .edit-mode .check-overlay { display: flex; }
         .edit-mode .log-card { transform: scale(0.98); }
         
-        /* ROSC Toggle */
-        .toggle-checkbox:checked { right: 0; border-color: #ef4444; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #ef4444; }
-        
-        /* 照片 */
-        .photo-preview { background-size: cover; background-position: center; }
+        /* Dark Mode Colors */
+        .dark .bg-slate-50 { background-color: #0f172a; }
+        .dark .bg-white { background-color: #1e293b; color: #f1f5f9; }
+        .dark input, .dark textarea, .dark select { background-color: #0f172a; border-color: #334155; color: white; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen pb-24 transition-colors duration-300">
 
-    <!-- 頂部系統列 -->
+    <!-- Header -->
     <div class="glass-header text-white p-3 sticky top-0 z-50 shadow-md border-b border-slate-700 flex justify-between items-center">
         <div class="flex items-center gap-2" onclick="switchView('viewDashboard')">
-            <div class="w-2 h-6 bg-blue-600 rounded-sm"></div>
-            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v4.0</span></h1>
+            <div class="w-2 h-6 bg-orange-500 rounded-sm"></div>
+            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v5.0</span></h1>
         </div>
         <div class="flex items-center gap-3">
             <button onclick="toggleTheme()" class="text-slate-400 hover:text-white transition"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
@@ -71,18 +70,18 @@
         </div>
     </div>
 
-    <!-- ================= 1. 儀表板 (Dashboard) ================= -->
+    <!-- 1. Dashboard -->
     <div id="viewDashboard" class="view-panel active container mx-auto p-3 max-w-lg">
         <div class="grid grid-cols-2 gap-3 mb-4">
             <div onclick="switchView('viewFire')" class="bg-white p-4 rounded border-l-4 border-red-500 shadow-sm active:scale-95 transition cursor-pointer dark:border-red-600">
-                <div class="flex justify-between mb-2"><i class="fa-solid fa-fire text-red-500 text-xl"></i><span class="text-xs font-bold text-slate-400">LOG</span></div>
-                <div class="text-xl font-bold text-slate-800">火警登錄</div>
-                <div class="text-xs text-slate-500 mt-1">Fire / Rescue</div>
+                <div class="flex justify-between mb-2"><i class="fa-solid fa-fire text-red-500 text-xl"></i><span class="text-xs font-bold text-slate-400">NEW</span></div>
+                <div class="text-xl font-bold text-slate-800 dark:text-white">火警登錄</div>
+                <div class="text-xs text-slate-500 mt-1">含戰術畫板</div>
             </div>
             <div onclick="switchView('viewEms')" class="bg-white p-4 rounded border-l-4 border-teal-500 shadow-sm active:scale-95 transition cursor-pointer dark:border-teal-600">
-                <div class="flex justify-between mb-2"><i class="fa-solid fa-heart-pulse text-teal-500 text-xl"></i><span class="text-xs font-bold text-slate-400">LOG</span></div>
-                <div class="text-xl font-bold text-slate-800">救護登錄</div>
-                <div class="text-xs text-slate-500 mt-1">EMS / Trauma</div>
+                <div class="flex justify-between mb-2"><i class="fa-solid fa-heart-pulse text-teal-500 text-xl"></i><span class="text-xs font-bold text-slate-400">NEW</span></div>
+                <div class="text-xl font-bold text-slate-800 dark:text-white">救護登錄</div>
+                <div class="text-xs text-slate-500 mt-1">PCR 快速選單</div>
             </div>
         </div>
 
@@ -99,11 +98,11 @@
         <div id="recentList" class="space-y-2"></div>
     </div>
 
-    <!-- ================= 2. 火警介面 ================= -->
+    <!-- 2. Fire Form -->
     <div id="viewFire" class="view-panel container mx-auto p-3 max-w-lg">
         <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden dark:border-slate-700">
             <div class="bg-slate-50 p-3 border-b border-slate-200 flex justify-between items-center dark:border-slate-700">
-                <span class="font-bold text-slate-700"><i class="fa-solid fa-fire text-red-500 mr-2"></i>火警案件</span>
+                <span class="font-bold text-slate-700 dark:text-slate-200"><i class="fa-solid fa-fire text-red-500 mr-2"></i>火警案件</span>
                 <button onclick="switchView('viewDashboard')" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form onsubmit="saveFire(event)" class="p-4 space-y-4">
@@ -112,24 +111,32 @@
                     <div class="col-span-3"><input type="text" id="fireLocation" placeholder="地點" class="w-full p-2 border rounded text-sm" required></div>
                 </div>
                 
-                <!-- 任務分工 (New) -->
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">My Role (我的任務)</label>
-                    <input type="hidden" id="fireRole">
-                    <div class="grid grid-cols-4 gap-2">
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs text-center">瞄子手</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs text-center">副瞄子</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs text-center">帶隊官</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs text-center">司機</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs text-center">搜救</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs text-center">水源</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs text-center">傳令</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs text-center">其他</button>
-                    </div>
+                <!-- 戰術畫板入口 -->
+                <div class="bg-slate-800 p-3 rounded text-center">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Tactical Board (戰術圖)</label>
+                    <button type="button" onclick="openTacticsEditor()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded w-full flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-pen-ruler"></i> 繪製/編輯現場圖
+                    </button>
+                    <div id="tacticsStatus" class="text-[10px] text-green-400 mt-2 hidden"><i class="fa-solid fa-check"></i> 已儲存戰術圖</div>
+                    <input type="hidden" id="fireTacticsData"> <!-- 存 JSON 字串 -->
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Classification</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">My Role</label>
+                    <input type="hidden" id="fireRole">
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">瞄子手</button>
+                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">副瞄子</button>
+                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">帶隊官</button>
+                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">司機</button>
+                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">搜救</button>
+                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">水源</button>
+                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">傳令</button>
+                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">其他</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Type</label>
                     <input type="hidden" id="fireType">
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">住宅火警</button>
@@ -144,8 +151,9 @@
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vehicles</label><input type="text" id="fireVehicles" placeholder="11, 91" class="w-full p-2 border rounded text-sm font-mono uppercase"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label><select id="fireStatus" class="w-full p-2 border rounded text-sm bg-white dark:bg-slate-800"><option value="成災">成災</option><option value="未成災">未成災</option><option value="誤報">誤報</option><option value="查看">查看</option></select></div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label><select id="fireStatus" class="w-full p-2 border rounded text-sm bg-white dark:bg-slate-800"><option value="成災">成災</option><option value="未成災">未成災</option><option value="誤報">誤報</option></select></div>
                 </div>
+                
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Photo</label>
                     <div class="flex items-center gap-3">
@@ -154,16 +162,16 @@
                         <input type="hidden" id="firePhotoData">
                     </div>
                 </div>
-                <button type="submit" class="w-full py-3 bg-slate-800 text-white rounded font-bold hover:bg-slate-900 mt-4 dark:bg-blue-600 dark:hover:bg-blue-700">CONFIRM ENTRY</button>
+                <button type="submit" class="w-full py-3 bg-slate-800 text-white rounded font-bold hover:bg-slate-900 mt-4 dark:bg-blue-600">CONFIRM ENTRY</button>
             </form>
         </div>
     </div>
 
-    <!-- ================= 3. 救護介面 ================= -->
+    <!-- 3. EMS Form -->
     <div id="viewEms" class="view-panel container mx-auto p-3 max-w-lg">
         <div class="bg-white rounded shadow-sm border border-slate-200 dark:border-slate-700">
             <div class="bg-slate-50 p-3 border-b border-slate-200 flex justify-between items-center dark:border-slate-700">
-                <span class="font-bold text-slate-700"><i class="fa-solid fa-heart-pulse text-teal-500 mr-2"></i>救護紀錄表</span>
+                <span class="font-bold text-slate-700 dark:text-slate-200"><i class="fa-solid fa-heart-pulse text-teal-500 mr-2"></i>救護紀錄表</span>
                 <button onclick="switchView('viewDashboard')" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form onsubmit="saveEms(event)" class="p-3 space-y-4">
@@ -171,8 +179,6 @@
                     <input type="datetime-local" id="emsDate" class="w-1/2 p-2 bg-slate-50 border rounded text-xs font-mono">
                     <input type="text" id="emsLocation" placeholder="地點" class="w-1/2 p-2 border rounded text-xs" required>
                 </div>
-                
-                <!-- 任務分工 (New) -->
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">My Role</label>
                     <input type="hidden" id="emsRole">
@@ -183,29 +189,23 @@
                         <button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-2 rounded text-xs text-center">實習</button>
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Case Type</label>
                     <input type="hidden" id="emsType">
                     <div class="flex flex-wrap gap-2">
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">內科急病</button>
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">車禍 (MVA)</button>
-                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">一般創傷</button>
+                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">創傷</button>
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">路倒</button>
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">OHCA</button>
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">急產</button>
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">精神</button>
                     </div>
                 </div>
-
                 <div id="roscSection" class="hidden bg-red-50 p-3 rounded border border-red-100 flex justify-between items-center dark:bg-red-900/20 dark:border-red-800">
                     <span class="text-sm font-bold text-red-700 flex items-center gap-2 dark:text-red-400"><i class="fa-solid fa-heart-pulse"></i> ROSC (恢復心跳)</span>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" name="isRosc" id="isRosc" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300"/>
-                        <label for="isRosc" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer dark:bg-slate-600"></label>
-                    </div>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"><input type="checkbox" name="isRosc" id="isRosc" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300"/><label for="isRosc" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer dark:bg-slate-600"></label></div>
                 </div>
-
                 <div class="bg-slate-50 p-3 rounded border border-slate-200 space-y-2 dark:border-slate-700">
                     <div class="flex items-center gap-2"><span class="text-xs font-bold w-10">GCS:</span><div class="flex-1 flex gap-1"><input type="text" id="gcsE" placeholder="E" class="w-1/3 p-1 text-center border text-xs font-mono" maxlength="1"><input type="text" id="gcsV" placeholder="V" class="w-1/3 p-1 text-center border text-xs font-mono" maxlength="1"><input type="text" id="gcsM" placeholder="M" class="w-1/3 p-1 text-center border text-xs font-mono" maxlength="1"></div></div>
                     <div class="flex gap-2"><div class="flex-1"><div class="text-[10px] text-gray-400">SpO2</div><input type="number" id="vitalSpo2" placeholder="%" class="w-full p-1 border text-sm font-mono"></div><div class="flex-1"><div class="text-[10px] text-gray-400">BP</div><input type="text" id="vitalBp" placeholder="SYS/DIA" class="w-full p-1 border text-sm font-mono"></div><div class="flex-1"><div class="text-[10px] text-gray-400">HR</div><input type="number" id="vitalHr" placeholder="BPM" class="w-full p-1 border text-sm font-mono"></div></div>
@@ -228,18 +228,13 @@
         </div>
     </div>
 
-    <!-- ================= 4. 歷史與統計 ================= -->
+    <!-- 4. History -->
     <div id="viewHistory" class="view-panel container mx-auto p-3 max-w-lg">
         <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-2">
-                <button onclick="switchView('viewDashboard')" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:text-slate-300"><i class="fa-solid fa-arrow-left"></i></button>
-                <h2 class="text-lg font-bold text-slate-800">勤務資料庫</h2>
-            </div>
+            <div class="flex items-center gap-2"><button onclick="switchView('viewDashboard')" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:text-slate-300"><i class="fa-solid fa-arrow-left"></i></button><h2 class="text-lg font-bold text-slate-800 dark:text-slate-200">勤務資料庫</h2></div>
             <button id="editToggleBtn" onclick="toggleEditMode()" class="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded border border-blue-100 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300"><i class="fa-solid fa-list-check mr-1"></i> 編輯</button>
         </div>
-
         <div id="historyStatsBar" class="bg-slate-800 text-white p-3 rounded mb-3 text-xs flex justify-around font-mono"></div>
-
         <div class="flex gap-2 mb-3">
             <input type="month" id="monthFilter" onchange="renderList()" class="bg-white border rounded text-xs p-2 font-mono w-32 dark:bg-slate-800 dark:border-slate-600">
             <div class="flex flex-1 gap-1">
@@ -248,35 +243,45 @@
                 <button onclick="filterType('ems', this)" class="filter-btn flex-1 bg-white text-slate-600 border text-xs font-bold rounded dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">救護</button>
             </div>
         </div>
-        
-        <div class="relative mb-4">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-            <input type="text" id="searchInput" onkeyup="renderList()" placeholder="Search..." class="w-full pl-9 p-2 bg-white border rounded text-sm outline-none dark:bg-slate-800 dark:border-slate-600">
-        </div>
-
+        <div class="relative mb-4"><i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-sm"></i><input type="text" id="searchInput" onkeyup="renderList()" placeholder="Search..." class="w-full pl-9 p-2 bg-white border rounded text-sm outline-none dark:bg-slate-800 dark:border-slate-600"></div>
         <div id="historyList" class="space-y-3 pb-40"></div>
-
         <div id="batchAction" class="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] border-t z-50 hidden dark:bg-slate-900 dark:border-slate-700">
-            <div class="container mx-auto max-w-lg flex justify-between items-center">
-                <span class="text-sm text-slate-600 font-bold dark:text-slate-300">已選擇 <span id="selectCount" class="text-red-500">0</span> 筆</span>
-                <button onclick="deleteSelected()" class="bg-red-600 text-white px-6 py-2 rounded font-bold shadow hover:bg-red-700">刪除選取</button>
-            </div>
+            <div class="container mx-auto max-w-lg flex justify-between items-center"><span class="text-sm text-slate-600 font-bold dark:text-slate-300">選取 <span id="selectCount" class="text-red-500">0</span> 筆</span><button onclick="deleteSelected()" class="bg-red-600 text-white px-6 py-2 rounded font-bold shadow hover:bg-red-700">刪除</button></div>
         </div>
-
         <div class="bg-white border border-slate-200 p-4 rounded-lg shadow-sm mt-6 dark:bg-slate-800 dark:border-slate-700">
             <div class="flex items-center gap-2 mb-3"><i class="fa-solid fa-database text-slate-400"></i><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Data Management</span></div>
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded text-sm font-bold gap-2 flex justify-center shadow"><i class="fa-solid fa-file-excel"></i> 匯出 Excel</button>
-                <button onclick="exportData()" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-sm font-bold gap-2 flex justify-center shadow"><i class="fa-solid fa-file-export"></i> 備份 JSON</button>
-            </div>
-            <div class="mt-3">
-                <button onclick="triggerImport()" class="w-full bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 py-2 rounded text-sm font-bold flex justify-center gap-2 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-500"><i class="fa-solid fa-file-import"></i> 還原備份</button>
-                <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(this)">
-            </div>
+            <div class="grid grid-cols-2 gap-3"><button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded text-sm font-bold gap-2 flex justify-center shadow"><i class="fa-solid fa-file-excel"></i> Excel</button><button onclick="exportData()" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-sm font-bold gap-2 flex justify-center shadow"><i class="fa-solid fa-file-export"></i> JSON</button></div>
+            <div class="mt-3"><button onclick="triggerImport()" class="w-full bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 py-2 rounded text-sm font-bold flex justify-center gap-2 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-500"><i class="fa-solid fa-file-import"></i> 還原</button><input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(this)"></div>
         </div>
     </div>
 
-    <!-- ================= 5. 詳細頁面 ================= -->
+    <!-- 5. 戰術畫板 Modal (NEW) -->
+    <div id="viewTacticsEditor" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-[70] hidden flex flex-col">
+        <div class="p-3 bg-slate-800 text-white flex justify-between items-center">
+            <h3 class="font-bold">戰術繪圖板 (8x8)</h3>
+            <button onclick="closeTactics()" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="flex-1 flex flex-col items-center justify-center bg-slate-900 p-4">
+            <div class="tac-grid mb-4" id="tacticsGrid">
+                <!-- JS 生成 8x8 -->
+            </div>
+            <!-- 工具列 -->
+            <div class="flex gap-4 p-2 bg-slate-800 rounded-full border border-slate-700 shadow-lg overflow-x-auto max-w-full">
+                <button onclick="setTool('empty')" class="w-10 h-10 rounded-full bg-slate-700 text-slate-400 border border-slate-600 flex items-center justify-center tool-btn active"><i class="fa-solid fa-eraser"></i></button>
+                <button onclick="setTool('fire')" class="w-10 h-10 rounded-full bg-red-900 text-red-500 border border-red-700 flex items-center justify-center tool-btn"><i class="fa-solid fa-fire"></i></button>
+                <button onclick="setTool('smoke')" class="w-10 h-10 rounded-full bg-slate-600 text-slate-300 border border-slate-500 flex items-center justify-center tool-btn"><i class="fa-solid fa-cloud"></i></button>
+                <button onclick="setTool('car')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 border border-red-300 flex items-center justify-center tool-btn"><i class="fa-solid fa-truck"></i></button>
+                <button onclick="setTool('water')" class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 border border-blue-300 flex items-center justify-center tool-btn"><i class="fa-solid fa-faucet-drip"></i></button>
+                <button onclick="setTool('victim')" class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 border border-yellow-300 flex items-center justify-center tool-btn"><i class="fa-solid fa-person-falling"></i></button>
+            </div>
+            <div class="text-xs text-slate-500 mt-2">點選工具 -> 點擊格子</div>
+        </div>
+        <div class="p-4 bg-slate-800 border-t border-slate-700">
+            <button onclick="saveTactics()" class="w-full py-3 bg-blue-600 text-white rounded font-bold">確認儲存圖面</button>
+        </div>
+    </div>
+
+    <!-- 6. 詳細頁面 (含戰術圖) -->
     <div id="viewDetail" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-[60] hidden flex items-end sm:items-center justify-center">
         <div class="bg-white w-full max-w-lg h-[90vh] sm:h-auto sm:rounded-xl rounded-t-xl overflow-y-auto shadow-2xl relative animate-[slideUp_0.3s_ease-out] dark:bg-slate-800">
             <div class="sticky top-0 bg-white/95 backdrop-blur border-b p-4 flex justify-between items-center z-10 dark:bg-slate-800/95 dark:border-slate-700">
@@ -285,7 +290,7 @@
             </div>
             <div id="detailContent" class="p-5 space-y-4"></div>
             <div class="p-4 border-t bg-slate-50 sticky bottom-0 flex gap-2 dark:bg-slate-900 dark:border-slate-700">
-                <button onclick="copyDetail()" class="flex-1 py-3 bg-blue-600 text-white rounded font-bold shadow hover:bg-blue-700"><i class="fa-solid fa-copy mr-2"></i>複製摘要</button>
+                <button onclick="copyDetail()" class="flex-1 py-3 bg-blue-600 text-white rounded font-bold shadow hover:bg-blue-700"><i class="fa-solid fa-copy mr-2"></i>摘要</button>
                 <button onclick="closeDetail()" class="flex-1 py-3 bg-slate-800 text-white rounded font-bold hover:bg-slate-900 dark:bg-slate-700">關閉</button>
             </div>
         </div>
@@ -298,29 +303,22 @@
         let selectedIds = new Set();
         let currentDetailLog = null;
         let isDark = localStorage.getItem('fireLogTheme') === 'dark';
+        
+        // 戰術變數
+        let currentTactics = Array(64).fill('empty'); // 8x8
+        let currentTool = 'empty';
 
         window.onload = () => { 
             if(isDark) document.documentElement.classList.add('dark');
             updateThemeIcon();
-            updateTime(); 
-            updateDashboard(); 
-            setInterval(updateTime, 1000); 
+            updateTime(); updateDashboard(); setInterval(updateTime, 1000); 
             document.getElementById('monthFilter').value = new Date().toISOString().slice(0, 7);
+            initTacticsGrid();
         };
         
         function updateTime() { document.getElementById('sysTime').innerText = new Date().toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit'}); }
-
-        // Dark Mode
-        function toggleTheme() {
-            isDark = !isDark;
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('fireLogTheme', isDark ? 'dark' : 'light');
-            updateThemeIcon();
-        }
-        function updateThemeIcon() {
-            const icon = document.getElementById('themeIcon');
-            icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        }
+        function toggleTheme() { isDark = !isDark; document.documentElement.classList.toggle('dark'); localStorage.setItem('fireLogTheme', isDark ? 'dark' : 'light'); updateThemeIcon(); }
+        function updateThemeIcon() { document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; }
 
         function switchView(viewId) {
             document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
@@ -333,6 +331,10 @@
                     document.getElementById('fireDate').value = t; 
                     clearPhoto('firePhotoPreview', 'firePhotoData');
                     document.querySelectorAll('#viewFire .sys-btn').forEach(b => b.classList.remove('active'));
+                    // 重置戰術板資料
+                    document.getElementById('fireTacticsData').value = '';
+                    document.getElementById('tacticsStatus').classList.add('hidden');
+                    currentTactics.fill('empty');
                 }
                 if(viewId === 'viewEms') { 
                     document.getElementById('emsDate').value = t; 
@@ -342,19 +344,69 @@
                     document.querySelectorAll('#viewEms .sys-btn').forEach(b => b.classList.remove('active'));
                 }
             }
-            if (viewId === 'viewHistory') { renderList(); }
-            if (viewId === 'viewDashboard') { updateDashboard(); }
+            if (viewId === 'viewHistory') renderList(); 
+            if (viewId === 'viewDashboard') updateDashboard();
         }
 
-        // === 核心邏輯 ===
+        // === 戰術畫板邏輯 ===
+        function initTacticsGrid() {
+            const grid = document.getElementById('tacticsGrid');
+            grid.innerHTML = '';
+            for(let i=0; i<64; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'tac-cell';
+                cell.dataset.idx = i;
+                cell.onclick = () => { 
+                    currentTactics[i] = currentTool; 
+                    renderTacticsCell(cell, currentTool);
+                };
+                grid.appendChild(cell);
+            }
+        }
+        function renderTacticsCell(el, type) {
+            const icons = {
+                'empty': '', 
+                'fire': '<i class="fa-solid fa-fire icon-fire"></i>',
+                'smoke': '<i class="fa-solid fa-cloud icon-smoke"></i>',
+                'car': '<i class="fa-solid fa-truck icon-car"></i>',
+                'water': '<i class="fa-solid fa-faucet-drip icon-water"></i>',
+                'victim': '<i class="fa-solid fa-person-falling icon-victim"></i>',
+                'ems': '<i class="fa-solid fa-truck-medical icon-ems"></i>'
+            };
+            el.innerHTML = icons[type] || '';
+        }
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('ring-2', 'ring-white'));
+            event.currentTarget.classList.add('ring-2', 'ring-white');
+        }
+        function openTacticsEditor() {
+            // 如果已有資料則載入
+            const existing = document.getElementById('fireTacticsData').value;
+            if(existing) currentTactics = JSON.parse(existing);
+            else currentTactics.fill('empty');
+            
+            // 重新渲染網格
+            const cells = document.querySelectorAll('#tacticsGrid .tac-cell');
+            cells.forEach((c, i) => renderTacticsCell(c, currentTactics[i]));
+            
+            document.getElementById('viewTacticsEditor').classList.remove('hidden');
+        }
+        function saveTactics() {
+            document.getElementById('fireTacticsData').value = JSON.stringify(currentTactics);
+            document.getElementById('tacticsStatus').classList.remove('hidden');
+            closeTactics();
+        }
+        function closeTactics() { document.getElementById('viewTacticsEditor').classList.add('hidden'); }
+
+        // === 一般表單邏輯 ===
         function handlePhoto(input, prevId, dataId) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image(); img.onload = () => {
                     const cvs = document.createElement('canvas'); const MAX=800;
-                    let w=img.width, h=img.height; 
-                    if(w>h){if(w>MAX){h*=MAX/w;w=MAX}}else{if(h>MAX){w*=MAX/h;h=MAX}}
+                    let w=img.width, h=img.height; if(w>h){if(w>MAX){h*=MAX/w;w=MAX}}else{if(h>MAX){w*=MAX/h;h=MAX}}
                     cvs.width=w; cvs.height=h; const ctx=cvs.getContext('2d'); ctx.drawImage(img,0,0,w,h);
                     const d = cvs.toDataURL('image/jpeg',0.6);
                     document.getElementById(dataId).value = d;
@@ -380,7 +432,8 @@
                 type: document.getElementById('fireType').value, loc: document.getElementById('fireLocation').value,
                 car: document.getElementById('fireVehicles').value, res: document.getElementById('fireStatus').value,
                 role: document.getElementById('fireRole').value || '未填',
-                photo: document.getElementById('firePhotoData').value
+                photo: document.getElementById('firePhotoData').value,
+                tactics: document.getElementById('fireTacticsData').value // 儲存戰術圖資料
             });
         }
         function saveEms(e) {
@@ -402,7 +455,7 @@
             catch(e){ alert('空間不足，請備份後刪除舊資料'); logs.shift(); }
         }
 
-        // === 歷史列表與統計 ===
+        // === 歷史與統計 ===
         function updateDashboard() {
             document.getElementById('dashTotal').innerText = logs.length;
             document.getElementById('dashFire').innerText = logs.filter(l=>l.cat==='fire').length;
@@ -418,22 +471,17 @@
             const list = document.getElementById('historyList');
             const search = document.getElementById('searchInput').value.toLowerCase();
             const month = document.getElementById('monthFilter').value;
-            list.innerHTML = '';
-            list.className = isEditMode ? 'space-y-3 edit-mode' : 'space-y-3';
-
+            list.innerHTML = ''; list.className = isEditMode ? 'space-y-3 edit-mode' : 'space-y-3';
             const filtered = logs.filter(l => {
                 if(currentFilter!=='all' && l.cat!==currentFilter) return false;
                 if(month && !l.date.startsWith(month)) return false;
                 return JSON.stringify(l).toLowerCase().includes(search);
             });
-
             const nFire = filtered.filter(l=>l.cat==='fire').length;
             const nEms = filtered.filter(l=>l.cat==='ems').length;
             const nRosc = filtered.filter(l=>l.rosc).length;
             document.getElementById('historyStatsBar').innerHTML = `<span>總計: ${filtered.length}</span><span>🔥 ${nFire}</span><span>🚑 ${nEms}</span><span class="text-red-400">❤️ ${nRosc}</span>`;
-
             if(filtered.length === 0) { list.innerHTML='<div class="text-center text-gray-400 mt-10">無資料</div>'; return; }
-
             filtered.forEach(log => {
                 const d = new Date(log.date);
                 const ds = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -442,58 +490,35 @@
                 const desc = log.cat==='fire' ? `${log.car||'-'} | ${log.res}` : `${log.main||'-'} > ${log.to||'-'}`;
                 const sel = selectedIds.has(log.id) ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500' : 'bg-white dark:bg-slate-800 dark:border-slate-700';
                 const roscIcon = log.rosc ? '<i class="fa-solid fa-heart text-red-500 ml-1 animate-pulse"></i>' : '';
-
-                list.innerHTML += `
-                    <div onclick="handleItemClick(${log.id})" class="log-card p-3 rounded border-l-4 ${clr} shadow-sm relative cursor-pointer transition ${sel}">
-                        <div class="check-overlay absolute inset-0 bg-white/50 items-center justify-end pr-4 ${selectedIds.has(log.id)?'opacity-100':'opacity-0 hover:opacity-100'} dark:bg-black/50">
-                            <div class="w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center ${selectedIds.has(log.id)?'bg-blue-500 border-blue-500':''}"><i class="fa-solid fa-check text-white text-xs"></i></div>
-                        </div>
-                        <div class="flex justify-between mb-1">
-                            <span class="${tag} text-[10px] px-1 rounded font-bold uppercase">${log.type} ${roscIcon}</span>
-                            <span class="text-xs font-mono text-slate-400">${ds}</span>
-                        </div>
-                        <div class="font-bold text-slate-800 dark:text-slate-200">${log.loc}</div>
-                        <div class="text-xs text-slate-500 mt-1 truncate dark:text-slate-400">${desc}</div>
-                        ${log.photo ? '<div class="absolute top-2 right-2 text-slate-300"><i class="fa-solid fa-image"></i></div>' : ''}
-                    </div>`;
+                list.innerHTML += `<div onclick="handleItemClick(${log.id})" class="log-card p-3 rounded border-l-4 ${clr} shadow-sm relative cursor-pointer transition ${sel}"><div class="check-overlay absolute inset-0 bg-white/50 items-center justify-end pr-4 ${selectedIds.has(log.id)?'opacity-100':'opacity-0 hover:opacity-100'} dark:bg-black/50"><div class="w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center ${selectedIds.has(log.id)?'bg-blue-500 border-blue-500':''}"><i class="fa-solid fa-check text-white text-xs"></i></div></div><div class="flex justify-between mb-1"><span class="${tag} text-[10px] px-1 rounded font-bold uppercase">${log.type} ${roscIcon}</span><span class="text-xs font-mono text-slate-400">${ds}</span></div><div class="font-bold text-slate-800 dark:text-slate-200">${log.loc}</div><div class="text-xs text-slate-500 mt-1 truncate dark:text-slate-400">${desc}</div>${(log.photo||log.tactics)?'<div class="absolute top-2 right-2 text-slate-300"><i class="fa-solid fa-paperclip"></i></div>':''}</div>`;
             });
         }
 
-        function handleItemClick(id) {
-            if(isEditMode) { if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id); renderList(); document.getElementById('selectCount').innerText = selectedIds.size; } 
-            else { showDetail(id); }
-        }
+        function handleItemClick(id) { if(isEditMode) { if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id); renderList(); document.getElementById('selectCount').innerText = selectedIds.size; } else { showDetail(id); } }
+        
         function showDetail(id) {
             const l = logs.find(log => log.id === id); currentDetailLog = l;
             const ds = new Date(l.date).toLocaleString('zh-TW');
-            // 點擊地點開啟 Google Maps
             const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.loc)}`;
             
+            // 戰術圖渲染 HTML
+            let tacticsHtml = '';
+            if(l.tactics) {
+                const tacData = JSON.parse(l.tactics);
+                const icons = {'empty':'','fire':'<i class="fa-solid fa-fire icon-fire"></i>','smoke':'<i class="fa-solid fa-cloud icon-smoke"></i>','car':'<i class="fa-solid fa-truck icon-car"></i>','water':'<i class="fa-solid fa-faucet-drip icon-water"></i>','victim':'<i class="fa-solid fa-person-falling icon-victim"></i>','ems':'<i class="fa-solid fa-truck-medical icon-ems"></i>'};
+                let gridStr = '';
+                tacData.forEach(type => gridStr += `<div class="tac-cell">${icons[type]}</div>`);
+                tacticsHtml = `<div class="mt-4"><div class="text-xs text-slate-400 mb-1">戰術佈署圖</div><div class="tac-grid">${gridStr}</div></div>`;
+            }
+
             let h = '';
             if(l.cat === 'fire') {
-                h = `
-                    ${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}
-                    <div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300">
-                        <div><div class="text-xs text-slate-400">類型</div><div class="font-bold text-red-500">火警 - ${l.type}</div></div>
-                        <div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div>
-                        <div class="col-span-2"><div class="text-xs text-slate-400">地點 (點擊導航)</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div>
-                        <div><div class="text-xs text-slate-400">我的任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div>
-                        <div><div class="text-xs text-slate-400">車輛</div><div>${l.car||'無'}</div></div>
-                        <div><div class="text-xs text-slate-400">結果</div><div class="font-bold text-red-600 dark:text-red-400">${l.res}</div></div>
-                    </div>`;
+                h = `${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}
+                    <div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold text-red-500">火警 - ${l.type}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div><div><div class="text-xs text-slate-400">我的任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div><div><div class="text-xs text-slate-400">車輛</div><div>${l.car||'無'}</div></div><div><div class="text-xs text-slate-400">結果</div><div class="font-bold text-red-600 dark:text-red-400">${l.res}</div></div></div>
+                    ${tacticsHtml}`;
             } else {
-                h = `
-                    ${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}
-                    <div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300">
-                        <div><div class="text-xs text-slate-400">類型</div><div class="font-bold flex items-center gap-1 text-teal-500">救護 - ${l.type} ${l.rosc?'<i class="fa-solid fa-heart text-red-500"></i>':''}</div></div>
-                        <div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div>
-                        <div class="col-span-2"><div class="text-xs text-slate-400">地點 (點擊導航)</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div>
-                        <div class="col-span-2 bg-slate-50 p-2 rounded border dark:bg-slate-700 dark:border-slate-600"><div class="text-xs text-slate-400">生命徵象</div><div class="font-mono font-bold">${l.vitals}</div></div>
-                        <div><div class="text-xs text-slate-400">我的任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div>
-                        <div><div class="text-xs text-slate-400">主訴</div><div>${l.main||'-'}</div></div>
-                        <div><div class="text-xs text-slate-400">送往</div><div>${l.to||'-'}</div></div>
-                        <div class="col-span-2"><div class="text-xs text-slate-400">備註/處置</div><div class="text-slate-600 dark:text-slate-400">${l.note||'無'}</div></div>
-                    </div>`;
+                h = `${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}
+                    <div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold flex items-center gap-1 text-teal-500">救護 - ${l.type} ${l.rosc?'<i class="fa-solid fa-heart text-red-500"></i>':''}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div><div class="col-span-2 bg-slate-50 p-2 rounded border dark:bg-slate-700 dark:border-slate-600"><div class="text-xs text-slate-400">生命徵象</div><div class="font-mono font-bold">${l.vitals}</div></div><div><div class="text-xs text-slate-400">我的任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div><div><div class="text-xs text-slate-400">主訴</div><div>${l.main||'-'}</div></div><div><div class="text-xs text-slate-400">送往</div><div>${l.to||'-'}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">備註/處置</div><div class="text-slate-600 dark:text-slate-400">${l.note||'無'}</div></div></div>`;
             }
             document.getElementById('detailContent').innerHTML = h;
             document.getElementById('viewDetail').classList.remove('hidden');
