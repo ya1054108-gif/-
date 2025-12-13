@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FireLog Pro v7.1</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>FireLog Pro v7.2</title>
+    <!-- 引入外部庫 (增加 onerror 處理) -->
+    <script src="https://cdn.tailwindcss.com" onerror="alert('載入樣式失敗，請檢查網路連線')"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" onerror="console.log('Icon load failed')">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" onerror="window.chartLoadFailed=true"></script>
     
     <script>
-        tailwind.config = { darkMode: 'class' }
+        try { tailwind.config = { darkMode: 'class' } } catch(e) { console.error('Tailwind config error', e) }
     </script>
 
     <style>
@@ -18,8 +19,8 @@
             font-family: 'Inter', -apple-system, sans-serif; 
             user-select: none; 
             -webkit-tap-highlight-color: transparent; 
-            /* 修正：底部留白，避免被導航列遮擋 */
             padding-bottom: 120px !important; 
+            background-color: #f1f5f9;
         }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
 
@@ -28,63 +29,41 @@
         .view-panel.active { display: block; animation: fadeIn 0.25s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 底部導航列 (優化深色模式) */
+        /* 底部導航列 */
         .nav-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px);
             border-top: 1px solid #e2e8f0;
             display: flex; justify-content: space-around;
-            padding: 10px 0 25px 0; /* 加高底部以適配手機 Home Bar */
+            padding: 10px 0 25px 0;
             z-index: 50;
             box-shadow: 0 -4px 20px -5px rgba(0, 0, 0, 0.1);
-            transition: background 0.3s, border-color 0.3s;
         }
-        .dark .nav-bar { 
-            background: rgba(15, 23, 42, 0.9); /* Slate-900 with opacity */
-            border-color: #334155; 
-        }
+        .dark .nav-bar { background: rgba(15, 23, 42, 0.95); border-color: #334155; }
         
         .nav-btn {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #94a3b8; font-size: 0.7rem; font-weight: 600; width: 100%;
-            transition: all 0.2s;
+            color: #94a3b8; font-size: 0.7rem; font-weight: 600; width: 100%; transition: all 0.2s;
         }
         .nav-btn i { font-size: 1.4rem; margin-bottom: 4px; transition: transform 0.2s; }
         .nav-btn.active { color: #3b82f6; }
         .nav-btn.active i { transform: translateY(-3px); }
         .dark .nav-btn.active { color: #60a5fa; }
 
-        /* 按鈕樣式 (優化深色對比) */
-        .sys-btn { 
-            border: 1px solid #e2e8f0; 
-            background: white; 
-            color: #475569; 
-            transition: all 0.15s; 
-        }
+        /* 按鈕樣式 */
+        .sys-btn { border: 1px solid #e2e8f0; background: white; color: #475569; transition: all 0.15s; }
         .sys-btn:active { transform: scale(0.95); }
-        .sys-btn.active { 
-            background: #334155; 
-            color: white; 
-            border-color: #334155; 
-            font-weight: 700; 
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); 
-        }
+        .sys-btn.active { background: #334155; color: white; border-color: #334155; font-weight: 700; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
         
-        /* Dark Mode 強制覆蓋 */
-        .dark body { background-color: #020617; color: #f8fafc; } /* Slate-950 */
+        /* Dark Mode */
+        .dark body { background-color: #020617; color: #f8fafc; }
         .dark .sys-btn { background: #1e293b; border-color: #475569; color: #94a3b8; }
         .dark .sys-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-        
-        /* 輸入框深色優化 */
-        .dark input, .dark textarea, .dark select { 
-            background-color: #0f172a !important; /* Slate-900 */
-            border-color: #475569 !important; 
-            color: #f1f5f9 !important; 
-        }
-        .dark input::placeholder, .dark textarea::placeholder { color: #64748b; }
+        .dark input, .dark textarea, .dark select { background-color: #0f172a !important; border-color: #475569 !important; color: #f1f5f9 !important; }
+        .dark input::placeholder { color: #64748b; }
 
-        /* Toast 通知 */
+        /* Toast */
         .toast {
             position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-100px);
             background: #1e293b; color: white; padding: 12px 24px; rounded: 99px;
@@ -95,18 +74,16 @@
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(20px); }
         .dark .toast { background: #f8fafc; color: #0f172a; }
 
-        /* 戰術畫板優化 */
+        /* 戰術畫板 */
         .tac-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px; background: #475569; border: 2px solid #475569; width: 100%; aspect-ratio: 1/1; }
         .tac-cell { background: #1e293b; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.3rem; }
-        .dark .tac-cell { background: #0f172a; } /* 深色模式下格子更深 */
+        .dark .tac-cell { background: #0f172a; }
         
-        /* 戰術圖示動畫 */
         .icon-fire { color: #ef4444; animation: pulse 1s infinite; }
         .icon-victim { color: #facc15; animation: bounce 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.1); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
-        /* 編輯模式 */
         .check-overlay { display: none; }
         .edit-mode .check-overlay { display: flex; }
         .edit-mode .log-card { transform: scale(0.96); opacity: 0.8; }
@@ -120,9 +97,9 @@
 
     <!-- Header -->
     <div class="glass-header bg-white/90 text-slate-800 p-3 sticky top-0 z-40 shadow-sm border-b border-slate-200 flex justify-between items-center backdrop-blur dark:bg-slate-900/90 dark:text-white dark:border-slate-800">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2" onclick="resetAppCounter()">
             <div class="w-2 h-6 bg-red-600 rounded-sm shadow-sm"></div>
-            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v7.1</span></h1>
+            <h1 class="font-bold tracking-wider text-sm select-none cursor-pointer">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v7.2</span></h1>
         </div>
         <div class="flex items-center gap-3">
             <button onclick="toggleTheme()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition">
@@ -133,10 +110,9 @@
 
     <!-- 1. Dashboard View -->
     <div id="viewDashboard" class="view-panel active container mx-auto p-4 max-w-lg">
-        <!-- 狀態卡 -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 mb-4 relative overflow-hidden">
             <div class="absolute top-0 right-0 p-4 opacity-10 dark:opacity-5"><i class="fa-solid fa-chart-pie text-6xl"></i></div>
-            <div class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">Total Statistics</div>
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">System Status</div>
             <div class="flex justify-between items-end relative z-10">
                 <div>
                     <div class="text-4xl font-mono font-bold text-slate-800 dark:text-white tracking-tight" id="dashTotal">0</div>
@@ -149,7 +125,6 @@
             </div>
         </div>
 
-        <!-- 快速工具入口 -->
         <div class="grid grid-cols-2 gap-3 mb-6">
             <button onclick="switchView('viewTools')" class="bg-slate-800 hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-white p-4 rounded-2xl shadow-md active:scale-95 transition flex flex-col items-center justify-center gap-2 border border-slate-700">
                 <i class="fa-solid fa-calculator text-2xl text-yellow-400"></i>
@@ -162,7 +137,6 @@
             </button>
         </div>
 
-        <!-- 最近紀錄 -->
         <div class="flex justify-between items-end mb-3 ml-1">
             <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Recent Logs</div>
             <button onclick="switchView('viewHistory')" class="text-xs text-blue-500 font-bold hover:underline">查看全部</button>
@@ -192,8 +166,7 @@
                     </div>
                 </div>
                 
-                <!-- 戰術板按鈕 -->
-                <button type="button" onclick="openTacticsEditor()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow transition border border-slate-600">
+                <button type="button" onclick="openTacticsEditor()" class="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow transition border border-slate-600">
                     <i class="fa-solid fa-chess-board text-yellow-400"></i> 繪製現場戰術圖
                 </button>
                 <div id="tacticsStatus" class="text-xs text-green-500 font-bold text-center hidden"><i class="fa-solid fa-check-circle mr-1"></i>已儲存戰術圖</div>
@@ -280,6 +253,7 @@
         <div class="bg-white border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm mt-6 dark:bg-slate-800">
             <div class="flex items-center gap-2 mb-3"><i class="fa-solid fa-database text-slate-400"></i><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Data Management</span></div>
             <div class="grid grid-cols-2 gap-3"><button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-bold gap-2 flex justify-center shadow"><i class="fa-solid fa-file-excel"></i> Excel</button><button onclick="exportData()" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm font-bold gap-2 flex justify-center shadow"><i class="fa-solid fa-file-export"></i> JSON</button></div>
+            <div class="mt-3"><button onclick="triggerImport()" class="w-full bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 py-2 rounded-lg text-sm font-bold flex justify-center gap-2 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-500"><i class="fa-solid fa-file-import"></i> 還原備份</button><input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(this)"></div>
         </div>
     </div>
 
@@ -346,14 +320,29 @@
         let isDark = localStorage.getItem('fireLogTheme') === 'dark';
         let currentTactics = Array(64).fill('empty');
         let currentTool = 'fire';
+        let appResetCount = 0;
 
         window.onload = () => { 
+            // 嘗試載入圖表庫，失敗則忽略
+            if(typeof Chart === 'undefined') console.warn('Chart.js failed to load');
+            
             if(isDark) document.documentElement.classList.add('dark');
             updateThemeIcon();
             updateTime(); updateDashboard(); setInterval(updateTime, 1000); 
             document.getElementById('monthFilter').value = new Date().toISOString().slice(0, 7);
-            initTacticsGrid();
+            try { initTacticsGrid(); } catch(e) { console.error('Grid init failed'); }
         };
+
+        function resetAppCounter() {
+            appResetCount++;
+            if(appResetCount > 4) {
+                if(confirm('強制重置所有資料以修復錯誤？')) {
+                    localStorage.removeItem('fireLogPro');
+                    location.reload();
+                }
+                appResetCount = 0;
+            }
+        }
 
         function updateTime() { document.getElementById('sysTime').innerText = new Date().toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit'}); }
         function toggleTheme() { isDark = !isDark; document.documentElement.classList.toggle('dark'); localStorage.setItem('fireLogTheme', isDark ? 'dark' : 'light'); updateThemeIcon(); }
@@ -364,7 +353,6 @@
             document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             
-            // 底部導航狀態
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             const map = {'viewDashboard':'nav-dash', 'viewFire':'nav-fire', 'viewEms':'nav-ems', 'viewHistory':'nav-hist', 'viewTools':'nav-dash'};
             if(map[viewId]) document.getElementById(map[viewId]).classList.add('active');
@@ -393,9 +381,22 @@
             if (viewId === 'viewDashboard') { updateDashboard(); }
         }
 
+        // === 工具與功能 ===
+        function getGPS(inputId) {
+            if (!navigator.geolocation) return alert('無法定位');
+            navigator.geolocation.getCurrentPosition(pos => {
+                const c = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+                const inp = document.getElementById(inputId); inp.value = inp.value ? inp.value + ` (${c})` : c;
+            }, err => alert('定位失敗'));
+        }
+        function setNow(id) { 
+            const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById(id).value = now.toISOString().slice(0,16);
+        }
+
         // === 戰術板 ===
         function initTacticsGrid() {
-            const grid = document.getElementById('tacticsGrid'); grid.innerHTML = '';
+            const grid = document.getElementById('tacticsGrid'); if(!grid) return; grid.innerHTML = '';
             for(let i=0; i<64; i++) {
                 const cell = document.createElement('div'); cell.className = 'tac-cell'; cell.dataset.idx = i;
                 cell.onclick = () => { currentTactics[i] = currentTool; renderTacticsCell(cell, currentTool); };
@@ -421,11 +422,10 @@
         function saveTactics() { document.getElementById('fireTacticsData').value = JSON.stringify(currentTactics); document.getElementById('tacticsStatus').classList.remove('hidden'); closeTactics(); }
         function closeTactics() { document.getElementById('viewTacticsEditor').classList.add('hidden'); }
 
-        // === 系統邏輯 ===
+        // === 表單 ===
         function handlePhoto(input, prevId, dataId) {
             const file = input.files[0]; if (!file) return;
-            // 限制大小 5MB
-            if(file.size > 5 * 1024 * 1024) { alert('照片太大，請選擇小於 5MB 的照片'); return; }
+            // 壓縮邏輯
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image(); img.onload = () => {
@@ -435,7 +435,7 @@
                     const d = cvs.toDataURL('image/jpeg',0.5);
                     document.getElementById(dataId).value = d;
                     const p = document.getElementById(prevId); p.style.backgroundImage=`url(${d})`; p.classList.remove('hidden'); 
-                    p.querySelector('button').classList.remove('hidden');
+                    document.getElementById(prevId.replace('Preview','Clear')).classList.remove('hidden');
                 }; img.src = e.target.result;
             }; reader.readAsDataURL(file);
         }
@@ -443,8 +443,6 @@
         function setBtn(btn, id) { Array.from(btn.parentElement.children).forEach(c=>c.classList.remove('active')); btn.classList.add('active'); document.getElementById(id).value=btn.innerText; }
         function setEmsType(btn) { setBtn(btn, 'emsType'); const r=document.getElementById('roscSection'); if(btn.innerText==='OHCA') r.classList.remove('hidden'); else {r.classList.add('hidden'); document.getElementById('isRosc').checked=false;} }
         function appendNote(t) { const n=document.getElementById('emsNote'); n.value+=(n.value?' ':'')+t; }
-        function getGPS(id){ if(!navigator.geolocation) return alert('無法定位'); navigator.geolocation.getCurrentPosition(p=>{const c=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`;const i=document.getElementById(id);i.value=i.value?i.value+` (${c})`:c;},e=>alert('定位失敗')); }
-        function setNow(id){ const now=new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset()); document.getElementById(id).value=now.toISOString().slice(0,16); }
 
         function saveFire(e) {
             e.preventDefault(); if(!document.getElementById('fireType').value) return alert('請選擇種類');
@@ -465,6 +463,7 @@
             }
         }
 
+        // === 歷史與統計 ===
         function updateDashboard() {
             document.getElementById('dashTotal').innerText = logs.length;
             document.getElementById('dashFire').innerText = logs.filter(l=>l.cat==='fire').length;
@@ -492,7 +491,7 @@
         function handleItemClick(id) { if(isEditMode) { if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id); renderList(); document.getElementById('selectCount').innerText = selectedIds.size; } else { showDetail(id); } }
         function showDetail(id) {
             const l = logs.find(log => log.id === id); currentDetailLog = l; const ds = new Date(l.date).toLocaleString('zh-TW'); const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.loc)}`;
-            let tacticsHtml = ''; if(l.tactics) { const tacData = JSON.parse(l.tactics); const icons = {'empty':'','house':'<i class="fa-solid fa-house icon-house"></i>','factory':'<i class="fa-solid fa-industry icon-factory"></i>','grass':'<i class="fa-solid fa-tree icon-grass"></i>','fire':'<i class="fa-solid fa-fire icon-fire"></i>','smoke':'<i class="fa-solid fa-cloud icon-smoke"></i>','car':'<i class="fa-solid fa-truck icon-car"></i>','water':'<i class="fa-solid fa-faucet-drip icon-water"></i>','hydrant':'<i class="fa-solid fa-fire-hydrant icon-hydrant"></i>','victim':'<i class="fa-solid fa-person-falling icon-victim"></i>','ems':'<i class="fa-solid fa-truck-medical icon-ems"></i>'}; let gridStr = ''; tacData.forEach(type => gridStr += `<div class="tac-cell">${icons[type]||''}</div>`); tacticsHtml = `<div class="mt-4"><div class="text-xs text-slate-400 mb-1">戰術佈署圖</div><div class="tac-grid" style="border:2px solid #475569;">${gridStr}</div></div>`; }
+            let tacticsHtml = ''; if(l.tactics) { const tacData = JSON.parse(l.tactics); const icons = {'empty':'','house':'<i class="fa-solid fa-house icon-house"></i>','factory':'<i class="fa-solid fa-industry icon-factory"></i>','grass':'<i class="fa-solid fa-tree icon-grass"></i>','fire':'<i class="fa-solid fa-fire icon-fire"></i>','smoke':'<i class="fa-solid fa-cloud icon-smoke"></i>','car':'<i class="fa-solid fa-truck icon-car"></i>','water':'<i class="fa-solid fa-faucet-drip icon-water"></i>','hydrant':'<i class="fa-solid fa-fire-hydrant icon-hydrant"></i>','victim':'<i class="fa-solid fa-person-falling icon-victim"></i>','ems':'<i class="fa-solid fa-truck-medical icon-ems"></i>'}; let gridStr = ''; tacData.forEach(type => gridStr += `<div class="tac-cell">${icons[type]||''}</div>`); tacticsHtml = `<div class="mt-4"><div class="text-xs text-slate-400 mb-1">戰術佈署圖</div><div class="tac-wrapper"><div class="tac-grid">${gridStr}</div></div></div>`; }
             let h = '';
             if(l.cat === 'fire') { h = `${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}<div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold text-red-500">火警 - ${l.type}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div><div><div class="text-xs text-slate-400">任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div><div><div class="text-xs text-slate-400">車輛</div><div>${l.car||'無'}</div></div><div><div class="text-xs text-slate-400">結果</div><div class="font-bold text-red-600 dark:text-red-400">${l.res}</div></div></div>${tacticsHtml}`; } 
             else { h = `${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}<div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold flex items-center gap-1 text-teal-500">救護 - ${l.type} ${l.rosc?'<i class="fa-solid fa-heart text-red-500"></i>':''}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div><div class="col-span-2 bg-slate-50 p-2 rounded border dark:bg-slate-700 dark:border-slate-600"><div class="text-xs text-slate-400">生命徵象</div><div class="font-mono font-bold">${l.vitals}</div></div><div><div class="text-xs text-slate-400">任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div><div><div class="text-xs text-slate-400">主訴</div><div>${l.main||'-'}</div></div><div><div class="text-xs text-slate-400">送往</div><div>${l.to||'-'}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">備註/處置</div><div class="text-slate-600 dark:text-slate-400">${l.note||'無'}</div></div></div>`; }
@@ -502,4 +501,17 @@
         function copyDetail() { const l=currentDetailLog; if(!l)return; const t = l.cat==='fire' ? `【火警】${l.date.replace('T',' ')}\n${l.loc}\n類型：${l.type}\n任務：${l.role}\n狀況：${l.res}` : `【救護】${l.date.replace('T',' ')}\n${l.loc}\n類型：${l.type}${l.rosc?'(ROSC)':''}\n主訴：${l.main}\n送往：${l.to}`; navigator.clipboard.writeText(t).then(()=>showToast('已複製')); }
 
         function toggleEditMode() { isEditMode=!isEditMode; updateEditUI(); selectedIds.clear(); renderList(); }
-        function updateEditUI() { const b=document.getElementById('editToggleBtn'), a=document.getElementById('batchAction'); if(isEditMode){ b.classList.replace('bg-blue-50','bg-slate-800'); b.classList.replace('text-blue-600','text-white'); b.innerHTML='<i class="fa-solid fa-check"></i> 完成'; a.classList.remove('hidden'); } else { b.classList.replace('bg-slate-800','bg-blue-50'); b.classList.replace('text-white','text-blue-600'); b.innerHTML='
+        function updateEditUI() { const b=document.getElementById('editToggleBtn'), a=document.getElementById('batchAction'); if(isEditMode){ b.classList.replace('bg-blue-50','bg-slate-800'); b.classList.replace('text-blue-600','text-white'); b.innerHTML='<i class="fa-solid fa-check"></i> 完成'; a.classList.remove('hidden'); } else { b.classList.replace('bg-slate-800','bg-blue-50'); b.classList.replace('text-white','text-blue-600'); b.innerHTML='<i class="fa-solid fa-list-check"></i> 編輯'; a.classList.add('hidden'); } }
+        function deleteSelected() { if(selectedIds.size===0) return alert('未選擇'); if(confirm(`刪除 ${selectedIds.size} 筆紀錄？`)) { logs=logs.filter(l=>!selectedIds.has(l.id)); localStorage.setItem('fireLogPro',JSON.stringify(logs)); toggleEditMode(); renderList(); updateDashboard(); showToast('刪除成功'); } }
+        function filterType(t,b) { currentFilter=t; document.querySelectorAll('.filter-btn').forEach(btn=>{btn.classList.remove('bg-slate-700','text-white');btn.classList.add('bg-white','text-slate-600')}); b.classList.remove('bg-white','text-slate-600'); b.classList.add('bg-slate-700','text-white'); renderList(); }
+
+        function exportData() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(logs)); a.download=`FireLog_Backup.json`; document.body.appendChild(a); a.click(); a.remove(); }
+        function exportCSV() { if(logs.length===0) return alert('無資料'); let csv="\uFEFF日期,時間,類別,細項,任務,地點,主訴/結果,送往/車輛,備註\n"; logs.forEach(l=>{ const dt=l.date.split('T'); const row=[dt[0], dt[1], l.cat==='fire'?'火警':'救護', l.type+(l.rosc?'(ROSC)':''), l.role, `"${l.loc}"`, l.cat==='fire'?l.res:l.main, l.cat==='fire'?l.car:l.to, `"${l.cat==='ems'?l.note:''}"`]; csv+=row.join(",")+"\n"; }); const a=document.createElement('a'); a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv); a.download=`FireLog_Export.csv`; document.body.appendChild(a); a.click(); a.remove(); }
+        function triggerImport(){document.getElementById('importFile').click();}
+        function importData(inp){ const f=inp.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ try{ const d=JSON.parse(e.target.result); if(confirm(`還原 ${d.length} 筆資料？`)){logs=d;localStorage.setItem('fireLogPro',JSON.stringify(logs));location.reload();} } catch(err){alert('檔案錯誤');} }; r.readAsText(f); }
+        
+        function calcScba() { const v=document.getElementById('scbaVol').value, b=document.getElementById('scbaBar').value; if(!b)return alert('請輸入壓力'); const m=Math.floor((v*b)/40); document.getElementById('scbaResult').innerHTML=`極限: ${m}分 <span class="text-xs opacity-50">|</span> 安全: ${Math.max(0,m-10)}分`; document.getElementById('scbaResult').classList.remove('hidden'); }
+        function calcWater() { const t=document.getElementById('waterTon').value, f=document.getElementById('waterFlow').value; if(!t||!f)return alert('請輸入數值'); document.getElementById('waterResult').innerText=`約 ${(t*1000/f).toFixed(1)} 分鐘`; document.getElementById('waterResult').classList.remove('hidden'); }
+    </script>
+</body>
+</html>
