@@ -65,7 +65,7 @@
     <div class="glass-header text-white p-3 sticky top-0 z-50 shadow-md border-b border-slate-700 flex justify-between items-center">
         <div class="flex items-center gap-2">
             <div class="w-2 h-6 bg-red-500 rounded-sm"></div>
-            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v2.0</span></h1>
+            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v2.1</span></h1>
         </div>
         <div class="text-xs font-mono text-slate-400" id="sysTime">00:00</div>
     </div>
@@ -95,7 +95,7 @@
         </div>
 
         <!-- 快速統計條 -->
-        <div class="bg-slate-800 text-white p-4 rounded shadow-sm mb-4 flex justify-between items-center" onclick="switchView('viewHistory')">
+        <div class="bg-slate-800 text-white p-4 rounded shadow-sm mb-4 flex justify-between items-center cursor-pointer active:opacity-90" onclick="switchView('viewHistory')">
             <div>
                 <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Cases</div>
                 <div class="text-2xl font-mono font-bold" id="dashTotal">0</div>
@@ -153,6 +153,8 @@
                         <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">車輛火警</button>
                         <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">高層建築</button>
                         <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">誤報/謊報</button>
+                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">船舶航空</button>
+                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">其他</button>
                     </div>
                 </div>
 
@@ -168,6 +170,7 @@
                             <option value="成災">成災</option>
                             <option value="未成災">未成災</option>
                             <option value="誤報">誤報</option>
+                            <option value="查看">查看</option>
                         </select>
                     </div>
                 </div>
@@ -202,6 +205,7 @@
                         <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">一般創傷</button>
                         <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">路倒</button>
                         <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">OHCA</button>
+                        <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">急產</button>
                         <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">精神</button>
                     </div>
                 </div>
@@ -265,7 +269,7 @@
     <!-- ================= 4. 歷史與統計 (History) ================= -->
     <div id="viewHistory" class="view-panel container mx-auto p-3 max-w-lg">
         <div class="flex items-center gap-2 mb-4">
-            <button onclick="switchView('viewDashboard')" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-slate-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <button onclick="switchView('viewDashboard')" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-slate-600 hover:bg-slate-100"><i class="fa-solid fa-arrow-left"></i></button>
             <h2 class="text-lg font-bold text-slate-800">勤務資料庫</h2>
         </div>
 
@@ -282,11 +286,33 @@
             <button onclick="filterType('fire', this)" class="filter-btn flex-1 py-2 bg-white text-slate-600 border text-xs font-bold rounded">火警</button>
             <button onclick="filterType('ems', this)" class="filter-btn flex-1 py-2 bg-white text-slate-600 border text-xs font-bold rounded">救護</button>
         </div>
-        <input type="text" id="searchInput" onkeyup="renderList()" placeholder="搜尋關鍵字..." class="w-full p-2 bg-white border rounded mb-4 text-sm outline-none">
+        <div class="relative mb-4">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+            <input type="text" id="searchInput" onkeyup="renderList()" placeholder="Search logs..." class="w-full pl-9 p-2 bg-white border rounded text-sm outline-none">
+        </div>
 
         <!-- 列表 -->
-        <div id="historyList" class="space-y-3 pb-10">
+        <div id="historyList" class="space-y-3 pb-4">
             <!-- JS 生成 -->
+        </div>
+
+        <!-- 資料管理區 (Backup/Restore) -->
+        <div class="bg-slate-800 text-white p-4 rounded-lg shadow-md mt-6">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-database text-slate-400"></i>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">System Data</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="exportData()" class="bg-slate-700 hover:bg-slate-600 py-2 rounded text-sm font-bold flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-file-export"></i> 備份資料
+                </button>
+                <button onclick="triggerImport()" class="bg-amber-600 hover:bg-amber-700 py-2 rounded text-sm font-bold flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-file-import"></i> 還原備份
+                </button>
+            </div>
+            <!-- 隱藏的檔案輸入框 -->
+            <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(this)">
+            <div class="text-[10px] text-slate-500 mt-2 text-center">Export/Import .json format</div>
         </div>
     </div>
 
@@ -334,25 +360,18 @@
         }
 
         // === 表單邏輯 ===
-        
-        // 通用按鈕選擇器
         function setBtn(btn, inputId) {
-            // 找到同層級的按鈕並移除 active
             const siblings = btn.parentElement.children;
-            for (let i = 0; i < siblings.length; i++) {
-                siblings[i].classList.remove('active');
-            }
+            for (let i = 0; i < siblings.length; i++) siblings[i].classList.remove('active');
             btn.classList.add('active');
             document.getElementById(inputId).value = btn.innerText;
         }
 
-        // 救護快速備註
         function appendNote(text) {
             const note = document.getElementById('emsNote');
             note.value += (note.value ? ' ' : '') + text;
         }
 
-        // 儲存火警
         function saveFire(e) {
             e.preventDefault();
             const type = document.getElementById('fireType').value;
@@ -370,17 +389,16 @@
             saveLog(log);
         }
 
-        // 儲存救護
         function saveEms(e) {
             e.preventDefault();
             const type = document.getElementById('emsType').value;
             if(!type) return alert('請選擇案件類別');
 
-            // 組合生命徵象字串
             const gcs = `E${document.getElementById('gcsE').value}V${document.getElementById('gcsV').value}M${document.getElementById('gcsM').value}`;
             const spo2 = document.getElementById('vitalSpo2').value;
             const bp = document.getElementById('vitalBp').value;
-            const vitals = `GCS:${gcs.length>3?gcs:'-'} SpO2:${spo2||'-'}% BP:${bp||'-'}`;
+            const hr = document.getElementById('vitalHr').value;
+            const vitals = `GCS:${gcs.length>3?gcs:'-'} SpO2:${spo2||'-'}% BP:${bp||'-'} HR:${hr||'-'}`;
 
             const log = {
                 id: Date.now(),
@@ -399,20 +417,17 @@
         function saveLog(log) {
             logs.unshift(log);
             localStorage.setItem('fireLogPro', JSON.stringify(logs));
-            // 清空表單欄位
             document.querySelectorAll('input:not([type=hidden])').forEach(i => i.value = '');
             document.querySelectorAll('textarea').forEach(i => i.value = '');
             switchView('viewDashboard');
         }
 
         // === 顯示與統計 ===
-
         function updateDashboard() {
             document.getElementById('dashTotal').innerText = logs.length;
             document.getElementById('dashFire').innerText = logs.filter(l=>l.cat==='fire').length;
             document.getElementById('dashEms').innerText = logs.filter(l=>l.cat==='ems').length;
             
-            // 首頁簡易列表 (只顯示前 3 筆)
             const list = document.getElementById('recentList');
             list.innerHTML = '';
             logs.slice(0, 3).forEach(log => {
@@ -523,7 +538,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'right', labels: { usePointStyle: true } }
+                        legend: { position: 'right', labels: { usePointStyle: true, font: {family:'Inter'} } }
                     },
                     cutout: '70%'
                 }
@@ -537,6 +552,59 @@
                 renderList();
                 renderChart();
             }
+        }
+
+        // === 備份與還原功能 (Backup/Restore) ===
+        
+        // 匯出備份
+        function exportData() {
+            if(logs.length === 0) { alert('目前沒有資料可以備份'); return; }
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs));
+            const date = new Date().toISOString().slice(0,10);
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `FireLog_Backup_${date}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // 觸發匯入
+        function triggerImport() {
+            document.getElementById('importFile').click();
+        }
+
+        // 執行匯入
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedLogs = JSON.parse(e.target.result);
+                    
+                    // 簡單驗證檔案格式是否為陣列
+                    if (!Array.isArray(importedLogs)) {
+                        alert('檔案格式錯誤：這不是有效的備份檔');
+                        return;
+                    }
+
+                    if(confirm(`確定要還原 ${importedLogs.length} 筆資料嗎？\n注意：目前的資料將被覆蓋！`)) {
+                        logs = importedLogs;
+                        localStorage.setItem('fireLogPro', JSON.stringify(logs));
+                        alert('還原成功！系統將重新整理');
+                        location.reload(); // 重新整理頁面以應用資料
+                    }
+                } catch (err) {
+                    alert('讀取失敗：檔案可能已損毀');
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+            // 清空 input 讓同一檔案可重複選取
+            input.value = '';
         }
     </script>
 </body>
