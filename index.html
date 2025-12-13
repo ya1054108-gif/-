@@ -3,468 +3,540 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>消防勤務紀錄 Pro</title>
+    <title>FireLog Pro 勤務系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- 引入圖表庫 Chart.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f1f5f9; }
+        /* 專業系統風格設定 */
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-fire: #ef4444;
+            --accent-ems: #14b8a6;
+        }
         
-        /* 頁面切換動畫 */
-        .view-section { display: none; }
-        .view-section.active { display: block; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        body { 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background-color: #f1f5f9; 
+            color: #334155;
+        }
 
-        /* 按鈕選中樣式 */
-        .select-btn { transition: all 0.2s; border: 1px solid #d1d5db; }
-        .select-btn.active { border-color: transparent; transform: scale(0.98); font-weight: bold; color: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        /* 數字與時間使用等寬字體 */
+        .font-mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+        /* 頁面切換 */
+        .view-panel { display: none; }
+        .view-panel.active { display: block; animation: fadeUpdate 0.2s ease-out; }
+        @keyframes fadeUpdate { from { opacity: 0.8; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 專業按鈕樣式 */
+        .sys-btn {
+            border: 1px solid #cbd5e1;
+            background: white;
+            color: #475569;
+            transition: all 0.15s;
+            position: relative;
+            overflow: hidden;
+        }
+        .sys-btn.active {
+            background: #334155;
+            color: white;
+            border-color: #334155;
+            font-weight: 600;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* EMS 快速選單按鈕 */
+        .ems-tag { font-size: 0.8rem; padding: 6px 4px; }
         
-        /* 火警選中色 */
-        .fire-type-btn.active { background-color: #ef4444; }
-        /* 救護選中色 */
-        .ems-type-btn.active { background-color: #10b981; }
-        /* 篩選器選中 */
-        .filter-btn.active { background-color: #3b82f6; color: white; border-color: #3b82f6; }
-
-        /* 日期輸入框優化 */
-        input[type="datetime-local"] { -webkit-appearance: none; }
+        /* 玻璃擬態 Header */
+        .glass-header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+        }
     </style>
 </head>
-<body class="pb-10">
+<body class="bg-slate-100 min-h-screen pb-20">
 
-    <!-- 頂部標題 -->
-    <div class="bg-slate-800 text-white p-3 sticky top-0 z-50 shadow flex justify-between items-center">
-        <div class="font-bold text-lg"><i class="fa-solid fa-helmet-safety mr-2"></i>勤務紀錄簿</div>
-        <div id="pageTitle" class="text-sm text-gray-300">首頁</div>
+    <!-- 頂部系統列 -->
+    <div class="glass-header text-white p-3 sticky top-0 z-50 shadow-md border-b border-slate-700 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-2 h-6 bg-red-500 rounded-sm"></div>
+            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v2.0</span></h1>
+        </div>
+        <div class="text-xs font-mono text-slate-400" id="sysTime">00:00</div>
     </div>
 
-    <!-- ================= 1. 首頁 (Home) ================= -->
-    <div id="viewHome" class="view-section active container mx-auto p-4 max-w-md">
-        <div class="grid grid-cols-1 gap-4 mt-4">
-            <!-- 火警按鈕 -->
-            <button onclick="switchView('viewFire')" class="h-32 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl shadow-lg flex items-center justify-center gap-4 hover:opacity-90 active:scale-95 transition">
-                <i class="fa-solid fa-fire text-5xl"></i>
-                <div class="text-left">
-                    <div class="text-3xl font-bold">火警</div>
-                    <div class="text-sm opacity-80">Fire Incident</div>
+    <!-- ================= 1. 儀表板 (Dashboard) ================= -->
+    <div id="viewDashboard" class="view-panel active container mx-auto p-3 max-w-lg">
+        
+        <!-- 狀態卡 -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div onclick="switchView('viewFire')" class="bg-white p-4 rounded border-l-4 border-red-500 shadow-sm active:scale-95 transition cursor-pointer group">
+                <div class="flex justify-between items-start mb-2">
+                    <i class="fa-solid fa-fire text-red-500 text-xl group-hover:scale-110 transition"></i>
+                    <span class="text-xs font-bold text-slate-400 uppercase">New Incident</span>
                 </div>
-            </button>
-            
-            <!-- 救護按鈕 -->
-            <button onclick="switchView('viewEms')" class="h-32 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-lg flex items-center justify-center gap-4 hover:opacity-90 active:scale-95 transition">
-                <i class="fa-solid fa-truck-medical text-5xl"></i>
-                <div class="text-left">
-                    <div class="text-3xl font-bold">救護</div>
-                    <div class="text-sm opacity-80">EMS Case</div>
-                </div>
-            </button>
+                <div class="text-xl font-bold text-slate-800">火警登錄</div>
+                <div class="text-xs text-slate-500 mt-1">Fire / Rescue</div>
+            </div>
 
-            <!-- 紀錄查詢按鈕 -->
-            <button onclick="switchView('viewHistory')" class="h-20 bg-white text-slate-700 border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center gap-3 hover:bg-gray-50 active:scale-95 transition mt-4">
-                <i class="fa-solid fa-chart-pie text-2xl text-blue-600"></i>
-                <span class="text-xl font-bold">紀錄查詢與統計</span>
-            </button>
+            <div onclick="switchView('viewEms')" class="bg-white p-4 rounded border-l-4 border-teal-500 shadow-sm active:scale-95 transition cursor-pointer group">
+                <div class="flex justify-between items-start mb-2">
+                    <i class="fa-solid fa-heart-pulse text-teal-500 text-xl group-hover:scale-110 transition"></i>
+                    <span class="text-xs font-bold text-slate-400 uppercase">New Patient</span>
+                </div>
+                <div class="text-xl font-bold text-slate-800">救護登錄</div>
+                <div class="text-xs text-slate-500 mt-1">EMS / Trauma</div>
+            </div>
+        </div>
+
+        <!-- 快速統計條 -->
+        <div class="bg-slate-800 text-white p-4 rounded shadow-sm mb-4 flex justify-between items-center" onclick="switchView('viewHistory')">
+            <div>
+                <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Cases</div>
+                <div class="text-2xl font-mono font-bold" id="dashTotal">0</div>
+            </div>
+            <div class="flex gap-4 text-right">
+                <div>
+                    <div class="text-[10px] text-red-400">FIRE</div>
+                    <div class="font-mono font-bold" id="dashFire">0</div>
+                </div>
+                <div>
+                    <div class="text-[10px] text-teal-400">EMS</div>
+                    <div class="font-mono font-bold" id="dashEms">0</div>
+                </div>
+                <div class="flex items-center text-slate-500">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近紀錄 (列表模式) -->
+        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Recent Logs</div>
+        <div id="recentList" class="space-y-2">
+            <!-- JS 產生 -->
         </div>
     </div>
 
-    <!-- ================= 2. 火警表單 (Fire Form) ================= -->
-    <div id="viewFire" class="view-section container mx-auto p-4 max-w-md">
-        <div class="bg-white rounded-xl shadow-lg p-5">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h2 class="text-xl font-bold text-red-600">新增火警紀錄</h2>
-                <button onclick="switchView('viewHome')" class="text-gray-400 text-2xl">&times;</button>
+    <!-- ================= 2. 火警介面 (Fire UI) ================= -->
+    <div id="viewFire" class="view-panel container mx-auto p-3 max-w-lg">
+        <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-slate-50 p-3 border-b border-slate-200 flex justify-between items-center">
+                <span class="font-bold text-slate-700"><i class="fa-solid fa-fire text-red-500 mr-2"></i>火警案件</span>
+                <button onclick="switchView('viewDashboard')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
-            <form onsubmit="saveFire(event)" class="space-y-4">
-                <!-- 日期時間 -->
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">出勤時間</label>
-                    <input type="datetime-local" id="fireDate" required class="w-full mt-1 p-2 bg-gray-50 border rounded-lg text-base outline-none focus:ring-2 focus:ring-red-200">
+            <form onsubmit="saveFire(event)" class="p-4 space-y-4">
+                <!-- 時間與地點 -->
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-3">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Time & Loc</label>
+                        <input type="datetime-local" id="fireDate" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm font-mono focus:border-red-500 outline-none">
+                    </div>
+                    <div class="col-span-3">
+                        <input type="text" id="fireLocation" placeholder="地點 (如: 中正路100號)" class="w-full p-2 border border-slate-200 rounded text-sm focus:border-red-500 outline-none" required>
+                    </div>
                 </div>
-                
-                <!-- 案件種類 (新需求) -->
+
+                <!-- 案件類型 (Grid Selection) -->
                 <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1 mb-2 block">案件種類 (單選)</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Classification</label>
+                    <input type="hidden" id="fireType">
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="selectFireType(this)" class="fire-type-btn select-btn p-3 rounded bg-gray-50 text-sm">一般(集合)住宅</button>
-                        <button type="button" onclick="selectFireType(this)" class="fire-type-btn select-btn p-3 rounded bg-gray-50 text-sm">工廠及倉庫</button>
-                        <button type="button" onclick="selectFireType(this)" class="fire-type-btn select-btn p-3 rounded bg-gray-50 text-sm">雜草/廢棄物/墓地</button>
-                        <button type="button" onclick="selectFireType(this)" class="fire-type-btn select-btn p-3 rounded bg-gray-50 text-sm">超高層建築物</button>
-                        <button type="button" onclick="selectFireType(this)" class="fire-type-btn select-btn p-3 rounded bg-gray-50 text-sm">汽機車</button>
-                        <button type="button" onclick="selectFireType(this)" class="fire-type-btn select-btn p-3 rounded bg-gray-50 text-sm">船舶/航空器</button>
-                        <button type="button" onclick="selectFireType(this)" class="fire-type-btn select-btn p-3 rounded bg-gray-50 text-sm">誤(謊)報</button>
-                        <button type="button" onclick="selectFireType(this)" class="fire-type-btn select-btn p-3 rounded bg-gray-50 text-sm">其他</button>
+                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">住宅火警</button>
+                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">工廠倉庫</button>
+                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">雜草廢棄物</button>
+                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">車輛火警</button>
+                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">高層建築</button>
+                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">誤報/謊報</button>
                     </div>
-                    <input type="hidden" id="fireType" required>
                 </div>
 
-                <!-- 地點 -->
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">地點</label>
-                    <input type="text" id="fireLocation" placeholder="例如：中山路100號" required class="w-full mt-1 p-3 border rounded-lg outline-none">
-                </div>
-
-                <!-- 車輛 -->
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">出勤車輛</label>
-                    <input type="text" id="fireVehicles" placeholder="例如：11, 61, 91" class="w-full mt-1 p-3 border rounded-lg outline-none">
-                </div>
-
-                <!-- 是否成災 -->
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">狀況</label>
-                    <select id="fireStatus" class="w-full mt-1 p-3 border rounded-lg bg-white outline-none">
-                        <option value="成災">✅ 成災 (有燒)</option>
-                        <option value="未成災">❌ 未成災</option>
-                        <option value="查看">👀 查看/無異狀</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 pt-4">
-                    <button type="button" onclick="switchView('viewHome')" class="p-3 rounded-lg border text-gray-600">取消</button>
-                    <button type="submit" class="p-3 rounded-lg bg-red-600 text-white font-bold shadow-md active:scale-95 transition">儲存火警</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ================= 3. 救護表單 (EMS Form) ================= -->
-    <div id="viewEms" class="view-section container mx-auto p-4 max-w-md">
-        <div class="bg-white rounded-xl shadow-lg p-5">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h2 class="text-xl font-bold text-emerald-600">新增救護紀錄</h2>
-                <button onclick="switchView('viewHome')" class="text-gray-400 text-2xl">&times;</button>
-            </div>
-            
-            <form onsubmit="saveEms(event)" class="space-y-4">
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">出勤時間</label>
-                    <input type="datetime-local" id="emsDate" required class="w-full mt-1 p-2 bg-gray-50 border rounded-lg text-base outline-none focus:ring-2 focus:ring-emerald-200">
-                </div>
-
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1 mb-2 block">案件種類 (單選)</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button type="button" onclick="selectEmsType(this)" class="ems-type-btn select-btn p-2 rounded bg-gray-50 text-sm">急病</button>
-                        <button type="button" onclick="selectEmsType(this)" class="ems-type-btn select-btn p-2 rounded bg-gray-50 text-sm">車禍</button>
-                        <button type="button" onclick="selectEmsType(this)" class="ems-type-btn select-btn p-2 rounded bg-gray-50 text-sm">創傷</button>
-                        <button type="button" onclick="selectEmsType(this)" class="ems-type-btn select-btn p-2 rounded bg-gray-50 text-sm">路倒</button>
-                        <button type="button" onclick="selectEmsType(this)" class="ems-type-btn select-btn p-2 rounded bg-gray-50 text-sm">急產</button>
-                        <button type="button" onclick="selectEmsType(this)" class="ems-type-btn select-btn p-2 rounded bg-gray-50 text-sm">其他</button>
-                    </div>
-                    <input type="hidden" id="emsType" required>
-                </div>
-
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">地點</label>
-                    <input type="text" id="emsLocation" placeholder="地點..." required class="w-full mt-1 p-3 border rounded-lg outline-none">
-                </div>
-
+                <!-- 詳細資料 -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-xs text-gray-500 font-bold ml-1">主訴/原因</label>
-                        <input type="text" id="emsReason" placeholder="如: 胸痛" class="w-full mt-1 p-3 border rounded-lg outline-none">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vehicles</label>
+                        <input type="text" id="fireVehicles" placeholder="11, 16, 91" class="w-full p-2 border border-slate-200 rounded text-sm font-mono uppercase">
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 font-bold ml-1">送往醫院</label>
-                        <input type="text" id="emsHospital" placeholder="如: 台大" class="w-full mt-1 p-3 border rounded-lg outline-none">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label>
+                        <select id="fireStatus" class="w-full p-2 border border-slate-200 rounded text-sm bg-white">
+                            <option value="成災">成災</option>
+                            <option value="未成災">未成災</option>
+                            <option value="誤報">誤報</option>
+                        </select>
                     </div>
                 </div>
 
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">備註 (處置/耗材)</label>
-                    <textarea id="emsNote" rows="2" class="w-full mt-1 p-3 border rounded-lg outline-none text-sm" placeholder="處置重點..."></textarea>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 pt-4">
-                    <button type="button" onclick="switchView('viewHome')" class="p-3 rounded-lg border text-gray-600">取消</button>
-                    <button type="submit" class="p-3 rounded-lg bg-emerald-600 text-white font-bold shadow-md active:scale-95 transition">儲存救護</button>
-                </div>
+                <button type="submit" class="w-full py-3 bg-slate-800 text-white rounded font-bold hover:bg-slate-900 mt-4 shadow-lg">CONFIRM ENTRY</button>
             </form>
         </div>
     </div>
 
-    <!-- ================= 4. 歷史與統計 (History & Stats) ================= -->
-    <div id="viewHistory" class="view-section container mx-auto p-4 max-w-md">
-        
-        <!-- 頂部按鈕 -->
-        <button onclick="switchView('viewHome')" class="mb-4 text-gray-500 flex items-center gap-1 font-bold">
-            <i class="fa-solid fa-chevron-left"></i> 返回首頁
-        </button>
+    <!-- ================= 3. 救護介面 (EMS UI - Professional) ================= -->
+    <div id="viewEms" class="view-panel container mx-auto p-3 max-w-lg">
+        <div class="bg-white rounded shadow-sm border border-slate-200">
+            <div class="bg-slate-50 p-3 border-b border-slate-200 flex justify-between items-center">
+                <span class="font-bold text-slate-700"><i class="fa-solid fa-heart-pulse text-teal-500 mr-2"></i>救護紀錄表 (PCR Lite)</span>
+                <button onclick="switchView('viewDashboard')" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form onsubmit="saveEms(event)" class="p-3 space-y-4">
+                <!-- 基本資料 -->
+                <div class="flex gap-2">
+                    <input type="datetime-local" id="emsDate" class="w-1/2 p-2 bg-slate-50 border border-slate-200 rounded text-xs font-mono">
+                    <input type="text" id="emsLocation" placeholder="地點" class="w-1/2 p-2 border border-slate-200 rounded text-xs" required>
+                </div>
 
-        <!-- 統計卡片 -->
-        <div class="bg-white p-4 rounded-xl shadow-lg mb-6">
-            <h3 class="text-center font-bold text-gray-700 mb-2">案件統計概覽</h3>
-            <div class="relative h-48 w-full flex justify-center">
+                <!-- 案件類別 (Tag Cloud) -->
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Case Type</label>
+                    <input type="hidden" id="emsType">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">內科急病</button>
+                        <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">車禍 (MVA)</button>
+                        <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">一般創傷</button>
+                        <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">路倒</button>
+                        <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">OHCA</button>
+                        <button type="button" onclick="setBtn(this, 'emsType')" class="sys-btn ems-tag rounded-full px-3">精神</button>
+                    </div>
+                </div>
+
+                <!-- 懶人勾選區 (Vital Signs & Assessment) -->
+                <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Quick Assessment</label>
+                    
+                    <div class="space-y-2">
+                        <!-- 意識 -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold w-10">GCS:</span>
+                            <div class="flex-1 flex gap-1">
+                                <input type="text" id="gcsE" placeholder="E" class="w-1/3 p-1 text-center border text-xs font-mono" maxlength="1">
+                                <input type="text" id="gcsV" placeholder="V" class="w-1/3 p-1 text-center border text-xs font-mono" maxlength="1">
+                                <input type="text" id="gcsM" placeholder="M" class="w-1/3 p-1 text-center border text-xs font-mono" maxlength="1">
+                            </div>
+                        </div>
+                        
+                        <!-- 生命徵象 -->
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <div class="text-[10px] text-gray-400">SpO2</div>
+                                <input type="number" id="vitalSpo2" placeholder="%" class="w-full p-1 border text-sm font-mono">
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-[10px] text-gray-400">BP</div>
+                                <input type="text" id="vitalBp" placeholder="SYS/DIA" class="w-full p-1 border text-sm font-mono">
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-[10px] text-gray-400">HR</div>
+                                <input type="number" id="vitalHr" placeholder="BPM" class="w-full p-1 border text-sm font-mono">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 處置與送醫 -->
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Disposition</label>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="emsReason" placeholder="主訴 (如: 胸痛, 肢體無力)" class="flex-1 p-2 border border-slate-200 rounded text-sm">
+                        <input type="text" id="emsHospital" placeholder="送往醫院" class="w-1/3 p-2 border border-slate-200 rounded text-sm">
+                    </div>
+                    <!-- 懶人備註標籤 -->
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        <button type="button" onclick="appendNote('O2面罩')" class="text-[10px] bg-white border px-2 py-1 rounded">+O2</button>
+                        <button type="button" onclick="appendNote('IV建立')" class="text-[10px] bg-white border px-2 py-1 rounded">+IV</button>
+                        <button type="button" onclick="appendNote('頸圈長背板')" class="text-[10px] bg-white border px-2 py-1 rounded">+頸圈</button>
+                        <button type="button" onclick="appendNote('AED監測')" class="text-[10px] bg-white border px-2 py-1 rounded">+AED</button>
+                        <button type="button" onclick="appendNote('家屬拒送')" class="text-[10px] bg-red-50 border border-red-200 text-red-600 px-2 py-1 rounded">+拒送</button>
+                    </div>
+                    <textarea id="emsNote" rows="2" class="w-full p-2 border border-slate-200 rounded text-sm" placeholder="備註..."></textarea>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-teal-600 text-white rounded font-bold hover:bg-teal-700 shadow-md">SAVE RECORD</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= 4. 歷史與統計 (History) ================= -->
+    <div id="viewHistory" class="view-panel container mx-auto p-3 max-w-lg">
+        <div class="flex items-center gap-2 mb-4">
+            <button onclick="switchView('viewDashboard')" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-slate-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <h2 class="text-lg font-bold text-slate-800">勤務資料庫</h2>
+        </div>
+
+        <!-- 圖表區 -->
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
+            <div class="h-40 w-full flex justify-center">
                 <canvas id="statsChart"></canvas>
             </div>
-            <div class="flex justify-around mt-4 text-center border-t pt-2">
-                <div>
-                    <div class="text-xs text-gray-400">總件數</div>
-                    <div class="text-xl font-bold text-slate-800" id="statTotal">0</div>
-                </div>
-                <div>
-                    <div class="text-xs text-gray-400">火警</div>
-                    <div class="text-xl font-bold text-red-500" id="statFire">0</div>
-                </div>
-                <div>
-                    <div class="text-xs text-gray-400">救護</div>
-                    <div class="text-xl font-bold text-emerald-500" id="statEms">0</div>
-                </div>
-            </div>
         </div>
 
-        <!-- 篩選器 -->
-        <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
-            <button onclick="filterLogs('all', this)" class="filter-btn active px-4 py-1 rounded-full border bg-white text-sm whitespace-nowrap">全部</button>
-            <button onclick="filterLogs('fire', this)" class="filter-btn px-4 py-1 rounded-full border bg-white text-sm whitespace-nowrap">只看火警</button>
-            <button onclick="filterLogs('ems', this)" class="filter-btn px-4 py-1 rounded-full border bg-white text-sm whitespace-nowrap">只看救護</button>
+        <!-- 搜尋篩選 -->
+        <div class="flex gap-2 mb-3">
+            <button onclick="filterType('all', this)" class="filter-btn active flex-1 py-2 bg-slate-700 text-white text-xs font-bold rounded">全部</button>
+            <button onclick="filterType('fire', this)" class="filter-btn flex-1 py-2 bg-white text-slate-600 border text-xs font-bold rounded">火警</button>
+            <button onclick="filterType('ems', this)" class="filter-btn flex-1 py-2 bg-white text-slate-600 border text-xs font-bold rounded">救護</button>
         </div>
-        
-        <!-- 搜尋框 -->
-        <div class="relative mb-4">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
-            <input type="text" id="searchInput" onkeyup="renderHistory()" placeholder="搜尋：車禍、工廠、地點..." class="w-full pl-10 p-2 border rounded-lg outline-none focus:border-blue-500">
-        </div>
+        <input type="text" id="searchInput" onkeyup="renderList()" placeholder="搜尋關鍵字..." class="w-full p-2 bg-white border rounded mb-4 text-sm outline-none">
 
         <!-- 列表 -->
-        <div id="historyList" class="space-y-3 pb-20">
-            <!-- JS 生成內容 -->
-        </div>
-
-        <div class="text-center mt-6">
-            <button onclick="exportData()" class="text-sm text-blue-500 underline">匯出資料備份 (.json)</button>
+        <div id="historyList" class="space-y-3 pb-10">
+            <!-- JS 生成 -->
         </div>
     </div>
 
     <script>
-        // 資料庫
-        let logs = JSON.parse(localStorage.getItem('proFireLogs')) || [];
-        let currentFilter = 'all'; // all, fire, ems
-        let myChart = null;
+        // === 系統核心 ===
+        let logs = JSON.parse(localStorage.getItem('fireLogPro')) || [];
+        let currentFilter = 'all';
+        let chartInstance = null;
 
         // 初始化
-        window.onload = function() {
-            // 預設載入
+        window.onload = () => {
+            updateTime();
+            updateDashboard();
+            setInterval(updateTime, 1000);
+        };
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('sysTime').innerText = now.toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit'});
         }
 
-        // 頁面切換
         function switchView(viewId) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             
-            // 更新標題
-            const titles = { 'viewHome': '首頁', 'viewFire': '新增火警', 'viewEms': '新增救護', 'viewHistory': '紀錄查詢' };
-            document.getElementById('pageTitle').innerText = titles[viewId];
-
-            // 如果進入表單，自動填時間
-            if(viewId === 'viewFire' || viewId === 'viewEms') {
+            // 自動填入時間
+            if (viewId === 'viewFire' || viewId === 'viewEms') {
                 const now = new Date();
                 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 const timeStr = now.toISOString().slice(0,16);
+                if(viewId === 'viewFire') document.getElementById('fireDate').value = timeStr;
+                if(viewId === 'viewEms') document.getElementById('emsDate').value = timeStr;
                 
-                if(viewId === 'viewFire') {
-                    document.getElementById('fireDate').value = timeStr;
-                    resetButtons('.fire-type-btn', 'fireType');
-                }
-                if(viewId === 'viewEms') {
-                    document.getElementById('emsDate').value = timeStr;
-                    resetButtons('.ems-type-btn', 'emsType');
-                }
+                // 重置按鈕
+                document.querySelectorAll('.sys-btn').forEach(b => b.classList.remove('active'));
             }
 
-            // 如果進入歷史頁面，刷新圖表與列表
-            if(viewId === 'viewHistory') {
-                updateStats();
-                renderHistory();
+            if (viewId === 'viewHistory') {
+                renderList();
+                renderChart();
+            }
+            if (viewId === 'viewDashboard') {
+                updateDashboard();
             }
         }
 
-        // 按鈕選擇邏輯
-        function selectFireType(btn) {
-            document.querySelectorAll('.fire-type-btn').forEach(b => b.classList.remove('active'));
+        // === 表單邏輯 ===
+        
+        // 通用按鈕選擇器
+        function setBtn(btn, inputId) {
+            // 找到同層級的按鈕並移除 active
+            const siblings = btn.parentElement.children;
+            for (let i = 0; i < siblings.length; i++) {
+                siblings[i].classList.remove('active');
+            }
             btn.classList.add('active');
-            document.getElementById('fireType').value = btn.innerText;
+            document.getElementById(inputId).value = btn.innerText;
         }
 
-        function selectEmsType(btn) {
-            document.querySelectorAll('.ems-type-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('emsType').value = btn.innerText;
+        // 救護快速備註
+        function appendNote(text) {
+            const note = document.getElementById('emsNote');
+            note.value += (note.value ? ' ' : '') + text;
         }
 
-        function resetButtons(selector, inputId) {
-            document.querySelectorAll(selector).forEach(b => b.classList.remove('active'));
-            document.getElementById(inputId).value = '';
-        }
-
-        // 儲存邏輯
+        // 儲存火警
         function saveFire(e) {
             e.preventDefault();
-            if(!document.getElementById('fireType').value) { alert('請選擇火警種類'); return; }
-            
+            const type = document.getElementById('fireType').value;
+            if(!type) return alert('請選擇火警種類');
+
             const log = {
                 id: Date.now(),
-                category: 'fire',
+                cat: 'fire',
                 date: document.getElementById('fireDate').value,
-                subType: document.getElementById('fireType').value,
-                location: document.getElementById('fireLocation').value,
-                vehicles: document.getElementById('fireVehicles').value,
-                status: document.getElementById('fireStatus').value,
+                type: type,
+                loc: document.getElementById('fireLocation').value,
+                car: document.getElementById('fireVehicles').value,
+                res: document.getElementById('fireStatus').value
             };
             saveLog(log);
         }
 
+        // 儲存救護
         function saveEms(e) {
             e.preventDefault();
-            if(!document.getElementById('emsType').value) { alert('請選擇案件種類'); return; }
+            const type = document.getElementById('emsType').value;
+            if(!type) return alert('請選擇案件類別');
+
+            // 組合生命徵象字串
+            const gcs = `E${document.getElementById('gcsE').value}V${document.getElementById('gcsV').value}M${document.getElementById('gcsM').value}`;
+            const spo2 = document.getElementById('vitalSpo2').value;
+            const bp = document.getElementById('vitalBp').value;
+            const vitals = `GCS:${gcs.length>3?gcs:'-'} SpO2:${spo2||'-'}% BP:${bp||'-'}`;
 
             const log = {
                 id: Date.now(),
-                category: 'ems',
+                cat: 'ems',
                 date: document.getElementById('emsDate').value,
-                subType: document.getElementById('emsType').value,
-                location: document.getElementById('emsLocation').value,
-                reason: document.getElementById('emsReason').value,
-                hospital: document.getElementById('emsHospital').value,
-                note: document.getElementById('emsNote').value
+                type: type,
+                loc: document.getElementById('emsLocation').value,
+                main: document.getElementById('emsReason').value,
+                to: document.getElementById('emsHospital').value,
+                note: document.getElementById('emsNote').value,
+                vitals: vitals
             };
             saveLog(log);
         }
 
         function saveLog(log) {
             logs.unshift(log);
-            localStorage.setItem('proFireLogs', JSON.stringify(logs));
-            alert('儲存成功！');
-            switchView('viewHome');
+            localStorage.setItem('fireLogPro', JSON.stringify(logs));
+            // 清空表單欄位
+            document.querySelectorAll('input:not([type=hidden])').forEach(i => i.value = '');
+            document.querySelectorAll('textarea').forEach(i => i.value = '');
+            switchView('viewDashboard');
         }
 
-        function deleteLog(id) {
-            if(confirm('確定要刪除此紀錄？')) {
-                logs = logs.filter(l => l.id !== id);
-                localStorage.setItem('proFireLogs', JSON.stringify(logs));
-                renderHistory();
-                updateStats();
-            }
-        }
+        // === 顯示與統計 ===
 
-        // 篩選器
-        function filterLogs(type, btn) {
-            currentFilter = type;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-            renderHistory();
-        }
-
-        // 渲染列表
-        function renderHistory() {
-            const list = document.getElementById('historyList');
-            const search = document.getElementById('searchInput').value.toLowerCase();
+        function updateDashboard() {
+            document.getElementById('dashTotal').innerText = logs.length;
+            document.getElementById('dashFire').innerText = logs.filter(l=>l.cat==='fire').length;
+            document.getElementById('dashEms').innerText = logs.filter(l=>l.cat==='ems').length;
+            
+            // 首頁簡易列表 (只顯示前 3 筆)
+            const list = document.getElementById('recentList');
             list.innerHTML = '';
-
-            const filtered = logs.filter(log => {
-                // 類別篩選
-                if(currentFilter !== 'all' && log.category !== currentFilter) return false;
-                // 關鍵字搜尋
-                const text = (log.location + log.subType + (log.reason||'') + (log.note||'')).toLowerCase();
-                return text.includes(search);
+            logs.slice(0, 3).forEach(log => {
+                const date = new Date(log.date).toLocaleDateString('zh-TW', {month:'numeric', day:'numeric'});
+                const colorClass = log.cat === 'fire' ? 'text-red-500 border-red-200' : 'text-teal-500 border-teal-200';
+                const icon = log.cat === 'fire' ? 'fa-fire' : 'fa-truck-medical';
+                
+                list.innerHTML += `
+                    <div class="bg-white p-2 rounded border border-slate-100 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded bg-slate-50 border ${colorClass} flex items-center justify-center">
+                                <i class="fa-solid ${icon} ${log.cat==='fire'?'text-red-500':'text-teal-500'}"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-sm text-slate-700">${log.type}</div>
+                                <div class="text-[10px] text-slate-400 font-mono">${date}</div>
+                            </div>
+                        </div>
+                        <div class="text-xs font-bold text-slate-500">${log.cat==='fire'?log.res:(log.to||'未送醫')}</div>
+                    </div>
+                `;
             });
+        }
 
-            if(filtered.length === 0) {
-                list.innerHTML = '<div class="text-center text-gray-400 mt-10">無符合紀錄</div>';
-                return;
-            }
+        function filterType(type, btn) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('bg-slate-700', 'text-white');
+                b.classList.add('bg-white', 'text-slate-600');
+            });
+            btn.classList.remove('bg-white', 'text-slate-600');
+            btn.classList.add('bg-slate-700', 'text-white');
+            renderList();
+        }
+
+        function renderList() {
+            const container = document.getElementById('historyList');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            container.innerHTML = '';
+
+            const filtered = logs.filter(l => {
+                if (currentFilter !== 'all' && l.cat !== currentFilter) return false;
+                const txt = JSON.stringify(l).toLowerCase();
+                return txt.includes(search);
+            });
 
             filtered.forEach(log => {
                 const dateObj = new Date(log.date);
-                const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()} ${dateObj.getHours().toString().padStart(2,'0')}:${dateObj.getMinutes().toString().padStart(2,'0')}`;
+                const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()} ${String(dateObj.getHours()).padStart(2,'0')}:${String(dateObj.getMinutes()).padStart(2,'0')}`;
                 
-                let cardHtml = '';
-                if(log.category === 'fire') {
-                    cardHtml = `
-                        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 relative">
-                            <div class="flex justify-between items-start">
-                                <div class="flex items-center gap-2">
-                                    <span class="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-md">火警</span>
-                                    <span class="text-sm font-bold text-slate-700">${log.subType}</span>
-                                </div>
-                                <span class="text-xs text-gray-400 font-mono">${dateStr}</span>
+                let html = '';
+                if(log.cat === 'fire') {
+                    html = `
+                        <div class="bg-white p-3 rounded border-l-4 border-red-500 shadow-sm relative">
+                            <div class="flex justify-between mb-1">
+                                <span class="bg-red-50 text-red-600 text-[10px] px-1 rounded font-bold uppercase tracking-wide">FIRE - ${log.type}</span>
+                                <span class="text-xs font-mono text-slate-400">${dateStr}</span>
                             </div>
-                            <div class="mt-2 text-base font-bold text-slate-800">${log.location}</div>
-                            <div class="mt-1 text-xs text-gray-500 flex flex-wrap gap-2">
-                                <span><i class="fa-solid fa-truck"></i> ${log.vehicles}</span>
-                                <span><i class="fa-solid fa-circle-info"></i> ${log.status}</span>
+                            <div class="font-bold text-slate-800">${log.loc}</div>
+                            <div class="text-xs text-slate-500 mt-1 flex gap-2">
+                                <span><i class="fa-solid fa-truck"></i> ${log.car||'-'}</span>
+                                <span class="${log.res==='成災'?'text-red-600 font-bold':''}"><i class="fa-solid fa-circle-info"></i> ${log.res}</span>
                             </div>
-                            <button onclick="deleteLog(${log.id})" class="absolute bottom-3 right-3 text-gray-300 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="deleteLog(${log.id})" class="absolute bottom-2 right-2 text-slate-200 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     `;
                 } else {
-                    cardHtml = `
-                        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 relative">
-                            <div class="flex justify-between items-start">
-                                <div class="flex items-center gap-2">
-                                    <span class="bg-emerald-100 text-emerald-600 text-xs font-bold px-2 py-1 rounded-md">救護</span>
-                                    <span class="text-sm font-bold text-slate-700">${log.subType}</span>
-                                </div>
-                                <span class="text-xs text-gray-400 font-mono">${dateStr}</span>
+                    html = `
+                        <div class="bg-white p-3 rounded border-l-4 border-teal-500 shadow-sm relative">
+                            <div class="flex justify-between mb-1">
+                                <span class="bg-teal-50 text-teal-600 text-[10px] px-1 rounded font-bold uppercase tracking-wide">EMS - ${log.type}</span>
+                                <span class="text-xs font-mono text-slate-400">${dateStr}</span>
                             </div>
-                            <div class="mt-2 text-base font-bold text-slate-800">${log.location}</div>
-                            <div class="mt-1 text-sm text-gray-600">
-                                主訴: <b>${log.reason || '-'}</b> ⮕ ${log.hospital || '-'}
+                            <div class="font-bold text-slate-800">${log.loc}</div>
+                            <div class="text-xs text-slate-600 mt-1 font-mono">${log.vitals}</div>
+                            <div class="text-xs mt-1 border-t border-dashed pt-1 flex justify-between">
+                                <span class="text-slate-700 font-bold">${log.main||'-'}</span>
+                                <span class="text-slate-500">⮕ ${log.to||'未送醫'}</span>
                             </div>
-                            ${log.note ? `<div class="mt-1 text-xs text-gray-400 bg-gray-50 p-1 rounded">${log.note}</div>` : ''}
-                            <button onclick="deleteLog(${log.id})" class="absolute bottom-3 right-3 text-gray-300 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                            ${log.note ? `<div class="mt-1 text-[10px] bg-slate-50 p-1 text-slate-500 rounded">${log.note}</div>` : ''}
+                            <button onclick="deleteLog(${log.id})" class="absolute bottom-2 right-2 text-slate-200 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     `;
                 }
-                list.innerHTML += cardHtml;
+                container.innerHTML += html;
             });
         }
 
-        // 更新圖表與數字
-        function updateStats() {
-            const fireCount = logs.filter(l => l.category === 'fire').length;
-            const emsCount = logs.filter(l => l.category === 'ems').length;
-            const total = logs.length;
-
-            document.getElementById('statTotal').innerText = total;
-            document.getElementById('statFire').innerText = fireCount;
-            document.getElementById('statEms').innerText = emsCount;
-
+        function renderChart() {
             const ctx = document.getElementById('statsChart').getContext('2d');
-            
-            if(myChart) myChart.destroy();
+            const fireCount = logs.filter(l=>l.cat==='fire').length;
+            const emsCount = logs.filter(l=>l.cat==='ems').length;
 
-            myChart = new Chart(ctx, {
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['火警', '救護'],
                     datasets: [{
                         data: [fireCount, emsCount],
-                        backgroundColor: ['#ef4444', '#10b981'],
-                        borderWidth: 0
+                        backgroundColor: ['#ef4444', '#14b8a6'],
+                        borderWidth: 0,
+                        hoverOffset: 4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom' }
-                    }
+                        legend: { position: 'right', labels: { usePointStyle: true } }
+                    },
+                    cutout: '70%'
                 }
             });
         }
 
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs));
-            const a = document.createElement('a');
-            a.setAttribute("href", dataStr);
-            a.setAttribute("download", "勤務紀錄備份.json");
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+        function deleteLog(id) {
+            if(confirm('刪除此紀錄？')) {
+                logs = logs.filter(l=>l.id!==id);
+                localStorage.setItem('fireLogPro', JSON.stringify(logs));
+                renderList();
+                renderChart();
+            }
         }
     </script>
 </body>
