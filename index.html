@@ -2,273 +2,308 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>打火日記 - 勤務紀錄與檢討</title>
-    <!-- 使用 Tailwind CSS 快速切版 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>極簡勤務紀錄</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 使用 FontAwesome 圖示 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        .type-tag { padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; color: white; }
-        .bg-fire { background-color: #ef4444; } /* 火警紅 */
-        .bg-ems { background-color: #10b981; } /* 救護綠 */
-        .bg-rescue { background-color: #f59e0b; } /* 搶救橘 */
-        .bg-service { background-color: #3b82f6; } /* 為民服務藍 */
-        .bg-drill { background-color: #6b7280; } /* 訓練灰 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f3f4f6; }
+        /* 隱藏/顯示控制 */
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* 救護類別按鈕選中樣式 */
+        .ems-btn.selected { background-color: #10b981; color: white; border-color: #10b981; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="pb-20">
 
-    <!-- 導航列 -->
-    <nav class="bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold"><i class="fa-solid fa-fire-extinguisher mr-2"></i>打火日記</h1>
-            <button onclick="exportData()" class="text-sm bg-slate-600 px-3 py-1 rounded hover:bg-slate-500">
-                <i class="fa-solid fa-download"></i> 備份
+    <!-- 頂部標題 -->
+    <div class="bg-slate-800 text-white p-4 sticky top-0 z-50 shadow text-center text-lg font-bold">
+        勤務紀錄簿
+    </div>
+
+    <!-- 1. 首頁 (Home View) -->
+    <div id="viewHome" class="view-section active container mx-auto p-4 max-w-md">
+        <div class="grid grid-cols-2 gap-4 h-48 mb-6">
+            <!-- 火警按鈕 -->
+            <button onclick="switchView('viewFire')" class="bg-red-600 text-white rounded-2xl shadow-lg flex flex-col items-center justify-center gap-2 hover:bg-red-700 active:scale-95 transition">
+                <i class="fa-solid fa-fire text-4xl"></i>
+                <span class="text-2xl font-bold">火警</span>
+            </button>
+            <!-- 救護按鈕 -->
+            <button onclick="switchView('viewEms')" class="bg-emerald-600 text-white rounded-2xl shadow-lg flex flex-col items-center justify-center gap-2 hover:bg-emerald-700 active:scale-95 transition">
+                <i class="fa-solid fa-truck-medical text-4xl"></i>
+                <span class="text-2xl font-bold">救護</span>
             </button>
         </div>
-    </nav>
 
-    <div class="container mx-auto p-4 max-w-2xl">
-        
-        <!-- 新增按鈕區 -->
-        <div class="mb-6 flex gap-2">
-            <input type="text" id="searchInput" placeholder="搜尋案件 (如: OHCA, 工廠...)" class="flex-grow p-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-red-500 outline-none" onkeyup="renderLogs()">
-            <button onclick="toggleModal()" class="bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg hover:bg-red-700 font-bold whitespace-nowrap">
-                <i class="fa-solid fa-plus"></i> 新增紀錄
-            </button>
+        <!-- 歷史紀錄列表 -->
+        <div class="flex justify-between items-center mb-2">
+            <h3 class="text-gray-500 font-bold">最近紀錄</h3>
+            <button onclick="exportData()" class="text-xs text-blue-600 underline">備份資料</button>
         </div>
-
-        <!-- 統計小卡 -->
-        <div class="grid grid-cols-3 gap-4 mb-6 text-center text-white">
-            <div class="bg-slate-700 p-3 rounded-lg shadow">
-                <div class="text-xs opacity-75">總勤務數</div>
-                <div class="text-xl font-bold" id="totalCount">0</div>
-            </div>
-            <div class="bg-red-500 p-3 rounded-lg shadow">
-                <div class="text-xs opacity-75">火警</div>
-                <div class="text-xl font-bold" id="fireCount">0</div>
-            </div>
-            <div class="bg-emerald-500 p-3 rounded-lg shadow">
-                <div class="text-xs opacity-75">救護</div>
-                <div class="text-xl font-bold" id="emsCount">0</div>
-            </div>
-        </div>
-
-        <!-- 紀錄列表 -->
-        <div id="logList" class="space-y-4">
-            <!-- 這裡會由 JavaScript 自動生成內容 -->
+        <div id="historyList" class="space-y-3">
+            <!-- JS 自動生成 -->
         </div>
     </div>
 
-    <!-- 新增/編輯 視窗 (Modal) -->
-    <div id="entryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div class="p-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
-                <h2 class="text-lg font-bold text-slate-800">新增勤務紀錄</h2>
-                <button onclick="toggleModal()" class="text-gray-500 hover:text-red-500 text-xl">&times;</button>
-            </div>
+    <!-- 2. 火警表單 (Fire View) -->
+    <div id="viewFire" class="view-section container mx-auto p-4 max-w-md">
+        <div class="bg-white rounded-xl shadow-lg p-5">
+            <h2 class="text-xl font-bold text-red-600 mb-4 border-b pb-2">🔥 新增火警紀錄</h2>
             
-            <form id="logForm" class="p-4 space-y-4" onsubmit="saveLog(event)">
-                <input type="hidden" id="logId">
+            <form onsubmit="saveFire(event)" class="space-y-4">
+                <div>
+                    <label class="text-sm text-gray-500">日期時間</label>
+                    <input type="datetime-local" id="fireDate" required class="w-full p-3 bg-gray-50 border rounded-lg text-lg font-mono">
+                </div>
                 
-                <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm text-gray-500">地點</label>
+                    <input type="text" id="fireLocation" placeholder="例如：中山路100號" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="text-sm text-gray-500">出勤車輛</label>
+                    <input type="text" id="fireVehicles" placeholder="例如：11, 61, 91" class="w-full p-3 border rounded-lg outline-none">
+                </div>
+
+                <div>
+                    <label class="text-sm text-gray-500">是否成災 / 狀況</label>
+                    <select id="fireStatus" class="w-full p-3 border rounded-lg bg-white outline-none">
+                        <option value="成災">✅ 成災 (有燒)</option>
+                        <option value="未成災">❌ 未成災</option>
+                        <option value="誤報">⚠️ 誤報/謊報</option>
+                        <option value="查看">👀 查看/其他</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" onclick="switchView('viewHome')" class="p-3 rounded-lg border text-gray-600">取消</button>
+                    <button type="submit" class="p-3 rounded-lg bg-red-600 text-white font-bold">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. 救護表單 (EMS View) -->
+    <div id="viewEms" class="view-section container mx-auto p-4 max-w-md">
+        <div class="bg-white rounded-xl shadow-lg p-5">
+            <h2 class="text-xl font-bold text-emerald-600 mb-4 border-b pb-2">🚑 新增救護紀錄</h2>
+            
+            <form onsubmit="saveEms(event)" class="space-y-4">
+                <div>
+                    <label class="text-sm text-gray-500">日期時間</label>
+                    <input type="datetime-local" id="emsDate" required class="w-full p-3 bg-gray-50 border rounded-lg text-lg font-mono">
+                </div>
+
+                <div>
+                    <label class="text-sm text-gray-500">地點</label>
+                    <input type="text" id="emsLocation" placeholder="地點..." required class="w-full p-3 border rounded-lg outline-none">
+                </div>
+
+                <div>
+                    <label class="text-sm text-gray-500 mb-1 block">案件種類</label>
+                    <div class="grid grid-cols-3 gap-2" id="emsTypeContainer">
+                        <!-- JS 會幫忙處理點擊變色 -->
+                        <button type="button" onclick="selectType(this)" class="ems-btn p-2 border rounded text-sm text-gray-600">急病</button>
+                        <button type="button" onclick="selectType(this)" class="ems-btn p-2 border rounded text-sm text-gray-600">車禍</button>
+                        <button type="button" onclick="selectType(this)" class="ems-btn p-2 border rounded text-sm text-gray-600">創傷</button>
+                        <button type="button" onclick="selectType(this)" class="ems-btn p-2 border rounded text-sm text-gray-600">路倒</button>
+                        <button type="button" onclick="selectType(this)" class="ems-btn p-2 border rounded text-sm text-gray-600">急產</button>
+                        <button type="button" onclick="selectType(this)" class="ems-btn p-2 border rounded text-sm text-gray-600">其他</button>
+                    </div>
+                    <input type="hidden" id="emsType" required> <!-- 隱藏欄位存值 -->
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">日期時間</label>
-                        <input type="datetime-local" id="logDate" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="text-sm text-gray-500">報案原因/主訴</label>
+                        <input type="text" id="emsReason" placeholder="如: 胸痛" class="w-full p-3 border rounded-lg outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">類型</label>
-                        <select id="logType" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="火警">🔥 火警</option>
-                            <option value="救護">🚑 救護</option>
-                            <option value="搶救">🧗 搶救</option>
-                            <option value="為民服務">🐍 為民服務</option>
-                            <option value="訓練">🏃 訓練/演習</option>
-                        </select>
+                        <label class="text-sm text-gray-500">送往醫院</label>
+                        <input type="text" id="emsHospital" placeholder="如: 台大" class="w-full p-3 border rounded-lg outline-none">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">地點 / 代號</label>
-                    <input type="text" id="logLocation" placeholder="例如：中山路一段 / 01案件" class="w-full p-2 border rounded outline-none">
+                    <label class="text-sm text-gray-500">備註 (處置/耗材)</label>
+                    <textarea id="emsNote" rows="2" class="w-full p-3 border rounded-lg outline-none" placeholder="處置重點..."></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">案件摘要</label>
-                    <input type="text" id="logTitle" required placeholder="例如：住宅火警、車禍OHCA" class="w-full p-2 border rounded outline-none font-bold">
-                </div>
-
-                <!-- 核心筆記區 -->
-                <div class="bg-yellow-50 p-3 rounded border border-yellow-200">
-                    <label class="block text-sm font-bold text-yellow-800 mb-1"><i class="fa-solid fa-lightbulb"></i> 檢討與注意事項 (最重要)</label>
-                    <textarea id="logNotes" rows="4" class="w-full p-2 border rounded outline-none text-sm" placeholder="這次學到了什麼？裝備哪裡有問題？下次遇到類似情況該注意什麼？"></textarea>
-                </div>
-
-                <div class="flex gap-2 pt-2">
-                    <button type="button" onclick="toggleModal()" class="flex-1 py-2 border rounded text-gray-600 hover:bg-gray-100">取消</button>
-                    <button type="submit" class="flex-1 py-2 bg-slate-800 text-white rounded hover:bg-slate-900">儲存紀錄</button>
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" onclick="switchView('viewHome')" class="p-3 rounded-lg border text-gray-600">取消</button>
+                    <button type="submit" class="p-3 rounded-lg bg-emerald-600 text-white font-bold">儲存</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // 初始化資料
-        let logs = JSON.parse(localStorage.getItem('fireLogs')) || [];
+        // 資料儲存變數
+        let logs = JSON.parse(localStorage.getItem('simpleFireLogs')) || [];
 
-        // 頁面載入時執行
-        window.onload = () => {
-            renderLogs();
-            updateStats();
-        };
+        // 初始化
+        window.onload = function() {
+            renderHistory();
+        }
 
-        // 開關 Modal
-        function toggleModal(isEdit = false) {
-            const modal = document.getElementById('entryModal');
-            const form = document.getElementById('logForm');
-            modal.classList.toggle('hidden');
-            
-            if (!modal.classList.contains('hidden') && !isEdit) {
-                form.reset();
-                document.getElementById('logId').value = '';
-                // 預設當下時間
+        // 切換頁面功能
+        function switchView(viewId) {
+            // 隱藏所有頁面
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            // 顯示目標頁面
+            document.getElementById(viewId).classList.add('active');
+
+            // 如果是打開表單，自動填入現在時間
+            if(viewId === 'viewFire' || viewId === 'viewEms') {
                 const now = new Date();
                 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                document.getElementById('logDate').value = now.toISOString().slice(0,16);
+                const timeStr = now.toISOString().slice(0,16);
+                
+                if(viewId === 'viewFire') document.getElementById('fireDate').value = timeStr;
+                if(viewId === 'viewEms') {
+                    document.getElementById('emsDate').value = timeStr;
+                    resetEmsButtons(); // 重置救護按鈕
+                }
             }
         }
 
-        // 儲存紀錄
-        function saveLog(e) {
+        // 救護類別按鈕點擊邏輯
+        function selectType(btn) {
+            // 清除其他按鈕樣式
+            document.querySelectorAll('.ems-btn').forEach(b => b.classList.remove('selected'));
+            // 設定當前按鈕樣式
+            btn.classList.add('selected');
+            // 寫入隱藏欄位
+            document.getElementById('emsType').value = btn.innerText;
+        }
+
+        function resetEmsButtons() {
+            document.querySelectorAll('.ems-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('emsType').value = '';
+        }
+
+        // 儲存火警
+        function saveFire(e) {
             e.preventDefault();
-            
-            const id = document.getElementById('logId').value;
-            const logData = {
-                id: id ? parseInt(id) : Date.now(),
-                date: document.getElementById('logDate').value,
-                type: document.getElementById('logType').value,
-                location: document.getElementById('logLocation').value,
-                title: document.getElementById('logTitle').value,
-                notes: document.getElementById('logNotes').value,
+            const log = {
+                id: Date.now(),
+                category: 'fire',
+                date: document.getElementById('fireDate').value,
+                location: document.getElementById('fireLocation').value,
+                vehicles: document.getElementById('fireVehicles').value,
+                status: document.getElementById('fireStatus').value,
+                note: '' // 火警目前沒備註欄位，留空或以後擴充
             };
-
-            if (id) {
-                // 編輯模式
-                const index = logs.findIndex(log => log.id === parseInt(id));
-                logs[index] = logData;
-            } else {
-                // 新增模式
-                logs.unshift(logData); // 加在最前面
-            }
-
-            localStorage.setItem('fireLogs', JSON.stringify(logs));
-            toggleModal();
-            renderLogs();
-            updateStats();
+            saveToLocal(log);
         }
 
-        // 刪除紀錄
-        function deleteLog(id) {
-            if(confirm('確定要刪除這條紀錄嗎？')) {
-                logs = logs.filter(log => log.id !== id);
-                localStorage.setItem('fireLogs', JSON.stringify(logs));
-                renderLogs();
-                updateStats();
-            }
+        // 儲存救護
+        function saveEms(e) {
+            e.preventDefault();
+            // 檢查有沒有選類別
+            const type = document.getElementById('emsType').value;
+            if(!type) { alert('請選擇案件種類'); return; }
+
+            const log = {
+                id: Date.now(),
+                category: 'ems',
+                date: document.getElementById('emsDate').value,
+                location: document.getElementById('emsLocation').value,
+                subType: type,
+                reason: document.getElementById('emsReason').value,
+                hospital: document.getElementById('emsHospital').value,
+                note: document.getElementById('emsNote').value
+            };
+            saveToLocal(log);
         }
 
-        // 編輯紀錄
-        function editLog(id) {
-            const log = logs.find(l => l.id === id);
-            if(log) {
-                document.getElementById('logId').value = log.id;
-                document.getElementById('logDate').value = log.date;
-                document.getElementById('logType').value = log.type;
-                document.getElementById('logLocation').value = log.location;
-                document.getElementById('logTitle').value = log.title;
-                document.getElementById('logNotes').value = log.notes;
-                toggleModal(true);
-            }
-        }
-
-        // 取得類型顏色
-        function getTypeColor(type) {
-            switch(type) {
-                case '火警': return 'bg-fire';
-                case '救護': return 'bg-ems';
-                case '搶救': return 'bg-rescue';
-                case '為民服務': return 'bg-service';
-                default: return 'bg-drill';
-            }
-        }
-
-        // 渲染列表
-        function renderLogs() {
-            const list = document.getElementById('logList');
-            const search = document.getElementById('searchInput').value.toLowerCase();
+        // 寫入資料庫並回到首頁
+        function saveToLocal(log) {
+            logs.unshift(log); // 加在最前面
+            localStorage.setItem('simpleFireLogs', JSON.stringify(logs));
             
-            list.innerHTML = '';
+            // 清空表單
+            document.querySelectorAll('input').forEach(i => i.value = '');
+            document.querySelectorAll('textarea').forEach(i => i.value = '');
+            
+            renderHistory();
+            switchView('viewHome');
+        }
 
-            const filteredLogs = logs.filter(log => 
-                log.title.toLowerCase().includes(search) || 
-                log.notes.toLowerCase().includes(search) ||
-                log.type.includes(search)
-            );
+        // 刪除
+        function deleteLog(id) {
+            if(confirm('確定刪除？')) {
+                logs = logs.filter(l => l.id !== id);
+                localStorage.setItem('simpleFireLogs', JSON.stringify(logs));
+                renderHistory();
+            }
+        }
 
-            if (filteredLogs.length === 0) {
-                list.innerHTML = '<div class="text-center text-gray-400 py-10">尚無紀錄，開始你的第一筆紀錄吧！</div>';
+        // 渲染歷史紀錄
+        function renderHistory() {
+            const container = document.getElementById('historyList');
+            container.innerHTML = '';
+
+            if(logs.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-4">尚無紀錄</div>';
                 return;
             }
 
-            filteredLogs.forEach(log => {
+            logs.forEach(log => {
                 const dateObj = new Date(log.date);
-                const dateStr = `${dateObj.getFullYear()}/${(dateObj.getMonth()+1).toString().padStart(2,'0')}/${dateObj.getDate().toString().padStart(2,'0')} ${dateObj.getHours().toString().padStart(2,'0')}:${dateObj.getMinutes().toString().padStart(2,'0')}`;
-
-                const card = document.createElement('div');
-                card.className = 'bg-white p-4 rounded-lg shadow border-l-4 ' + (log.type === '火警' ? 'border-red-500' : (log.type === '救護' ? 'border-emerald-500' : 'border-gray-300'));
+                const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()} ${dateObj.getHours().toString().padStart(2,'0')}:${dateObj.getMinutes().toString().padStart(2,'0')}`;
                 
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <span class="type-tag ${getTypeColor(log.type)}">${log.type}</span>
-                            <span class="text-xs text-gray-500 ml-2">${dateStr}</span>
+                let html = '';
+                
+                if(log.category === 'fire') {
+                    html = `
+                        <div class="bg-white p-3 rounded-lg shadow border-l-4 border-red-500 relative">
+                            <button onclick="deleteLog(${log.id})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded">火警</span>
+                                <span class="text-sm font-bold text-gray-700">${dateStr}</span>
+                            </div>
+                            <div class="text-lg font-bold mb-1">${log.location}</div>
+                            <div class="text-sm text-gray-600">
+                                <span><i class="fa-solid fa-truck"></i> ${log.vehicles || '無紀錄'}</span>
+                                <span class="mx-1">|</span>
+                                <span class="${log.status === '成災' ? 'text-red-600 font-bold' : 'text-gray-500'}">${log.status}</span>
+                            </div>
                         </div>
-                        <div>
-                            <button onclick="editLog(${log.id})" class="text-blue-500 hover:text-blue-700 mx-1"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteLog(${log.id})" class="text-gray-400 hover:text-red-500 mx-1"><i class="fa-solid fa-trash"></i></button>
+                    `;
+                } else {
+                    html = `
+                        <div class="bg-white p-3 rounded-lg shadow border-l-4 border-emerald-500 relative">
+                            <button onclick="deleteLog(${log.id})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded">救護 - ${log.subType}</span>
+                                <span class="text-sm font-bold text-gray-700">${dateStr}</span>
+                            </div>
+                            <div class="text-lg font-bold mb-1">${log.location}</div>
+                            <div class="text-sm text-gray-600 mb-1">
+                                主訴: <b>${log.reason || '-'}</b> ⮕ ${log.hospital || '未送醫'}
+                            </div>
+                            ${log.note ? `<div class="text-xs text-gray-500 bg-gray-50 p-1 rounded mt-1">${log.note}</div>` : ''}
                         </div>
-                    </div>
-                    <h3 class="font-bold text-lg text-slate-800">${log.title}</h3>
-                    ${log.location ? `<div class="text-sm text-gray-500 mb-2"><i class="fa-solid fa-location-dot mr-1"></i>${log.location}</div>` : ''}
-                    
-                    ${log.notes ? `
-                        <div class="mt-3 bg-yellow-50 p-3 rounded text-sm text-gray-700 leading-relaxed whitespace-pre-wrap border border-yellow-100">
-                            <strong class="text-yellow-700 block mb-1">檢討筆記：</strong>${log.notes}
-                        </div>
-                    ` : ''}
-                `;
-                list.appendChild(card);
+                    `;
+                }
+                container.innerHTML += html;
             });
         }
 
-        // 更新統計數據
-        function updateStats() {
-            document.getElementById('totalCount').innerText = logs.length;
-            document.getElementById('fireCount').innerText = logs.filter(l => l.type === '火警').length;
-            document.getElementById('emsCount').innerText = logs.filter(l => l.type === '救護').length;
-        }
-
-        // 匯出資料
         function exportData() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "fire_log_backup_" + new Date().toISOString().slice(0,10) + ".json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", "勤務備份.json");
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
         }
     </script>
 </body>
