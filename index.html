@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FireLog Pro v5.0</title>
+    <title>FireLog Pro v5.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -31,19 +31,44 @@
         .glass-header { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); }
         .photo-preview { background-size: cover; background-position: center; }
 
-        /* 戰術畫板 Grid */
-        .tac-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; background: #334155; padding: 2px; border-radius: 4px; }
-        .tac-cell { aspect-ratio: 1; background: #1e293b; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: background 0.1s; }
-        .tac-cell:active { background: #475569; }
+        /* 戰術畫板 Grid (修正版) */
+        .tac-wrapper { width: 100%; max-width: 350px; margin: 0 auto; aspect-ratio: 1/1; }
+        .tac-grid { 
+            display: grid; 
+            grid-template-columns: repeat(8, 1fr); 
+            grid-template-rows: repeat(8, 1fr);
+            gap: 1px; 
+            background: #475569; 
+            border: 2px solid #475569;
+            width: 100%;
+            height: 100%;
+        }
+        .tac-cell { 
+            background: #1e293b; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            font-size: 1.2rem; /* 圖示大小 */
+        }
+        .tac-cell:active { background: #334155; }
         
-        /* 戰術圖示顏色 */
-        .icon-fire { color: #ef4444; animation: pulse 1.5s infinite; }
-        .icon-water { color: #3b82f6; }
-        .icon-car { color: #f87171; }
-        .icon-ems { color: #34d399; }
-        .icon-victim { color: #facc15; }
-        .icon-smoke { color: #94a3b8; opacity: 0.7; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        /* 工具按鈕選中樣式 */
+        .tool-btn.active { ring-width: 2px; ring-color: #facc15; transform: scale(1.1); }
+
+        /* 戰術圖示定義 */
+        .icon-fire { color: #ef4444; animation: pulse 1s infinite; }
+        .icon-smoke { color: #94a3b8; opacity: 0.8; }
+        .icon-house { color: #cbd5e1; }
+        .icon-factory { color: #a5b4fc; }
+        .icon-grass { color: #84cc16; }
+        .icon-hydrant { color: #fbbf24; }
+        .icon-car { color: #f87171; text-shadow: 0 0 2px black; }
+        .icon-water { color: #3b82f6; font-size: 0.8rem !important; } /* 水線細一點 */
+        .icon-victim { color: #facc15; animation: bounce 1s infinite; }
+        
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 
         /* 編輯選單 */
         .check-overlay { display: none; }
@@ -62,7 +87,7 @@
     <div class="glass-header text-white p-3 sticky top-0 z-50 shadow-md border-b border-slate-700 flex justify-between items-center">
         <div class="flex items-center gap-2" onclick="switchView('viewDashboard')">
             <div class="w-2 h-6 bg-orange-500 rounded-sm"></div>
-            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v5.0</span></h1>
+            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v5.1</span></h1>
         </div>
         <div class="flex items-center gap-3">
             <button onclick="toggleTheme()" class="text-slate-400 hover:text-white transition"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
@@ -113,12 +138,12 @@
                 
                 <!-- 戰術畫板入口 -->
                 <div class="bg-slate-800 p-3 rounded text-center">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Tactical Board (戰術圖)</label>
-                    <button type="button" onclick="openTacticsEditor()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded w-full flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-pen-ruler"></i> 繪製/編輯現場圖
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Tactical Board (兵棋推演)</label>
+                    <button type="button" onclick="openTacticsEditor()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-3 px-4 rounded w-full flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
+                        <i class="fa-solid fa-pen-ruler"></i> 點擊繪製現場圖
                     </button>
-                    <div id="tacticsStatus" class="text-[10px] text-green-400 mt-2 hidden"><i class="fa-solid fa-check"></i> 已儲存戰術圖</div>
-                    <input type="hidden" id="fireTacticsData"> <!-- 存 JSON 字串 -->
+                    <div id="tacticsStatus" class="text-[10px] text-green-400 mt-2 hidden font-bold"><i class="fa-solid fa-check"></i> 已儲存戰術圖</div>
+                    <input type="hidden" id="fireTacticsData">
                 </div>
 
                 <div>
@@ -151,7 +176,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vehicles</label><input type="text" id="fireVehicles" placeholder="11, 91" class="w-full p-2 border rounded text-sm font-mono uppercase"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label><select id="fireStatus" class="w-full p-2 border rounded text-sm bg-white dark:bg-slate-800"><option value="成災">成災</option><option value="未成災">未成災</option><option value="誤報">誤報</option></select></div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label><select id="fireStatus" class="w-full p-2 border rounded text-sm bg-white dark:bg-slate-800"><option value="成災">成災</option><option value="未成災">未成災</option><option value="誤報">誤報</option><option value="查看">查看</option></select></div>
                 </div>
                 
                 <div>
@@ -195,7 +220,7 @@
                     <div class="flex flex-wrap gap-2">
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">內科急病</button>
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">車禍 (MVA)</button>
-                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">創傷</button>
+                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">一般創傷</button>
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">路倒</button>
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">OHCA</button>
                         <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3">急產</button>
@@ -255,29 +280,46 @@
         </div>
     </div>
 
-    <!-- 5. 戰術畫板 Modal (NEW) -->
-    <div id="viewTacticsEditor" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-[70] hidden flex flex-col">
-        <div class="p-3 bg-slate-800 text-white flex justify-between items-center">
+    <!-- 5. 戰術畫板 Modal (5.1 FIXED) -->
+    <div id="viewTacticsEditor" class="fixed inset-0 bg-slate-900 z-[70] hidden flex flex-col">
+        <div class="p-3 bg-slate-800 text-white flex justify-between items-center border-b border-slate-700">
             <h3 class="font-bold">戰術繪圖板 (8x8)</h3>
-            <button onclick="closeTactics()" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <button onclick="closeTactics()" class="text-slate-400 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
-        <div class="flex-1 flex flex-col items-center justify-center bg-slate-900 p-4">
-            <div class="tac-grid mb-4" id="tacticsGrid">
-                <!-- JS 生成 8x8 -->
+        <div class="flex-1 flex flex-col items-center justify-center p-4 bg-slate-900 w-full overflow-hidden">
+            
+            <!-- 戰術網格 (確保正方形且可見) -->
+            <div class="tac-wrapper mb-4">
+                <div class="tac-grid" id="tacticsGrid">
+                    <!-- JS 生成 -->
+                </div>
             </div>
+
             <!-- 工具列 -->
-            <div class="flex gap-4 p-2 bg-slate-800 rounded-full border border-slate-700 shadow-lg overflow-x-auto max-w-full">
-                <button onclick="setTool('empty')" class="w-10 h-10 rounded-full bg-slate-700 text-slate-400 border border-slate-600 flex items-center justify-center tool-btn active"><i class="fa-solid fa-eraser"></i></button>
-                <button onclick="setTool('fire')" class="w-10 h-10 rounded-full bg-red-900 text-red-500 border border-red-700 flex items-center justify-center tool-btn"><i class="fa-solid fa-fire"></i></button>
-                <button onclick="setTool('smoke')" class="w-10 h-10 rounded-full bg-slate-600 text-slate-300 border border-slate-500 flex items-center justify-center tool-btn"><i class="fa-solid fa-cloud"></i></button>
-                <button onclick="setTool('car')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 border border-red-300 flex items-center justify-center tool-btn"><i class="fa-solid fa-truck"></i></button>
-                <button onclick="setTool('water')" class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 border border-blue-300 flex items-center justify-center tool-btn"><i class="fa-solid fa-faucet-drip"></i></button>
-                <button onclick="setTool('victim')" class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 border border-yellow-300 flex items-center justify-center tool-btn"><i class="fa-solid fa-person-falling"></i></button>
+            <div class="w-full max-w-[350px]">
+                <div class="flex gap-3 p-2 bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-x-auto justify-between mb-3">
+                    <button onclick="setTool('house')" class="tool-btn w-10 h-10 rounded-lg bg-slate-700 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-house"></i></button>
+                    <button onclick="setTool('factory')" class="tool-btn w-10 h-10 rounded-lg bg-slate-700 text-indigo-300 flex items-center justify-center"><i class="fa-solid fa-industry"></i></button>
+                    <button onclick="setTool('grass')" class="tool-btn w-10 h-10 rounded-lg bg-slate-700 text-lime-400 flex items-center justify-center"><i class="fa-solid fa-tree"></i></button>
+                    <button onclick="setTool('fire')" class="tool-btn w-10 h-10 rounded-lg bg-red-900/50 text-red-500 border border-red-900 flex items-center justify-center"><i class="fa-solid fa-fire"></i></button>
+                    <button onclick="setTool('smoke')" class="tool-btn w-10 h-10 rounded-lg bg-slate-600 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-cloud"></i></button>
+                </div>
+                <div class="flex gap-3 p-2 bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-x-auto justify-between">
+                    <button onclick="setTool('car')" class="tool-btn w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center"><i class="fa-solid fa-truck"></i></button>
+                    <button onclick="setTool('water')" class="tool-btn w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-faucet-drip"></i></button>
+                    <button onclick="setTool('hydrant')" class="tool-btn w-10 h-10 rounded-lg bg-yellow-100 text-yellow-600 flex items-center justify-center"><i class="fa-solid fa-fire-hydrant"></i></button>
+                    <button onclick="setTool('victim')" class="tool-btn w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-person-falling"></i></button>
+                    <button onclick="setTool('empty')" class="tool-btn w-10 h-10 rounded-lg bg-slate-900 text-slate-500 border border-slate-700 flex items-center justify-center"><i class="fa-solid fa-eraser"></i></button>
+                </div>
             </div>
-            <div class="text-xs text-slate-500 mt-2">點選工具 -> 點擊格子</div>
+            
+            <div class="flex justify-between w-full max-w-[350px] mt-2">
+                <span class="text-[10px] text-slate-500">點選工具 -> 點擊格子</span>
+                <button onclick="clearTactics()" class="text-[10px] text-red-400 underline">清空畫布</button>
+            </div>
         </div>
-        <div class="p-4 bg-slate-800 border-t border-slate-700">
-            <button onclick="saveTactics()" class="w-full py-3 bg-blue-600 text-white rounded font-bold">確認儲存圖面</button>
+        <div class="p-4 bg-slate-800 border-t border-slate-700 sticky bottom-0">
+            <button onclick="saveTactics()" class="w-full py-3 bg-blue-600 text-white rounded font-bold shadow-lg hover:bg-blue-700">確認儲存圖面</button>
         </div>
     </div>
 
@@ -305,8 +347,8 @@
         let isDark = localStorage.getItem('fireLogTheme') === 'dark';
         
         // 戰術變數
-        let currentTactics = Array(64).fill('empty'); // 8x8
-        let currentTool = 'empty';
+        let currentTactics = Array(64).fill('empty');
+        let currentTool = 'fire'; // 預設工具
 
         window.onload = () => { 
             if(isDark) document.documentElement.classList.add('dark');
@@ -331,7 +373,6 @@
                     document.getElementById('fireDate').value = t; 
                     clearPhoto('firePhotoPreview', 'firePhotoData');
                     document.querySelectorAll('#viewFire .sys-btn').forEach(b => b.classList.remove('active'));
-                    // 重置戰術板資料
                     document.getElementById('fireTacticsData').value = '';
                     document.getElementById('tacticsStatus').classList.add('hidden');
                     currentTactics.fill('empty');
@@ -344,11 +385,11 @@
                     document.querySelectorAll('#viewEms .sys-btn').forEach(b => b.classList.remove('active'));
                 }
             }
-            if (viewId === 'viewHistory') renderList(); 
-            if (viewId === 'viewDashboard') updateDashboard();
+            if (viewId === 'viewHistory') { renderList(); }
+            if (viewId === 'viewDashboard') { updateDashboard(); }
         }
 
-        // === 戰術畫板邏輯 ===
+        // === 戰術畫板邏輯 (v5.1 Fixed) ===
         function initTacticsGrid() {
             const grid = document.getElementById('tacticsGrid');
             grid.innerHTML = '';
@@ -366,10 +407,14 @@
         function renderTacticsCell(el, type) {
             const icons = {
                 'empty': '', 
+                'house': '<i class="fa-solid fa-house icon-house"></i>',
+                'factory': '<i class="fa-solid fa-industry icon-factory"></i>',
+                'grass': '<i class="fa-solid fa-tree icon-grass"></i>',
                 'fire': '<i class="fa-solid fa-fire icon-fire"></i>',
                 'smoke': '<i class="fa-solid fa-cloud icon-smoke"></i>',
                 'car': '<i class="fa-solid fa-truck icon-car"></i>',
                 'water': '<i class="fa-solid fa-faucet-drip icon-water"></i>',
+                'hydrant': '<i class="fa-solid fa-fire-hydrant icon-hydrant"></i>',
                 'victim': '<i class="fa-solid fa-person-falling icon-victim"></i>',
                 'ems': '<i class="fa-solid fa-truck-medical icon-ems"></i>'
             };
@@ -377,16 +422,21 @@
         }
         function setTool(tool) {
             currentTool = tool;
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('ring-2', 'ring-white'));
-            event.currentTarget.classList.add('ring-2', 'ring-white');
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+        function clearTactics() {
+            if(confirm('確定清空畫布？')) {
+                currentTactics.fill('empty');
+                const cells = document.querySelectorAll('#tacticsGrid .tac-cell');
+                cells.forEach(c => c.innerHTML = '');
+            }
         }
         function openTacticsEditor() {
-            // 如果已有資料則載入
             const existing = document.getElementById('fireTacticsData').value;
             if(existing) currentTactics = JSON.parse(existing);
             else currentTactics.fill('empty');
             
-            // 重新渲染網格
             const cells = document.querySelectorAll('#tacticsGrid .tac-cell');
             cells.forEach((c, i) => renderTacticsCell(c, currentTactics[i]));
             
@@ -399,7 +449,7 @@
         }
         function closeTactics() { document.getElementById('viewTacticsEditor').classList.add('hidden'); }
 
-        // === 一般表單邏輯 ===
+        // === 表單邏輯 ===
         function handlePhoto(input, prevId, dataId) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -433,7 +483,7 @@
                 car: document.getElementById('fireVehicles').value, res: document.getElementById('fireStatus').value,
                 role: document.getElementById('fireRole').value || '未填',
                 photo: document.getElementById('firePhotoData').value,
-                tactics: document.getElementById('fireTacticsData').value // 儲存戰術圖資料
+                tactics: document.getElementById('fireTacticsData').value
             });
         }
         function saveEms(e) {
@@ -501,14 +551,13 @@
             const ds = new Date(l.date).toLocaleString('zh-TW');
             const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.loc)}`;
             
-            // 戰術圖渲染 HTML
             let tacticsHtml = '';
             if(l.tactics) {
                 const tacData = JSON.parse(l.tactics);
-                const icons = {'empty':'','fire':'<i class="fa-solid fa-fire icon-fire"></i>','smoke':'<i class="fa-solid fa-cloud icon-smoke"></i>','car':'<i class="fa-solid fa-truck icon-car"></i>','water':'<i class="fa-solid fa-faucet-drip icon-water"></i>','victim':'<i class="fa-solid fa-person-falling icon-victim"></i>','ems':'<i class="fa-solid fa-truck-medical icon-ems"></i>'};
+                const icons = {'empty':'','house':'<i class="fa-solid fa-house icon-house"></i>','factory':'<i class="fa-solid fa-industry icon-factory"></i>','grass':'<i class="fa-solid fa-tree icon-grass"></i>','fire':'<i class="fa-solid fa-fire icon-fire"></i>','smoke':'<i class="fa-solid fa-cloud icon-smoke"></i>','car':'<i class="fa-solid fa-truck icon-car"></i>','water':'<i class="fa-solid fa-faucet-drip icon-water"></i>','hydrant':'<i class="fa-solid fa-fire-hydrant icon-hydrant"></i>','victim':'<i class="fa-solid fa-person-falling icon-victim"></i>','ems':'<i class="fa-solid fa-truck-medical icon-ems"></i>'};
                 let gridStr = '';
-                tacData.forEach(type => gridStr += `<div class="tac-cell">${icons[type]}</div>`);
-                tacticsHtml = `<div class="mt-4"><div class="text-xs text-slate-400 mb-1">戰術佈署圖</div><div class="tac-grid">${gridStr}</div></div>`;
+                tacData.forEach(type => gridStr += `<div class="tac-cell">${icons[type]||''}</div>`);
+                tacticsHtml = `<div class="mt-4"><div class="text-xs text-slate-400 mb-1">戰術佈署圖</div><div class="tac-wrapper"><div class="tac-grid">${gridStr}</div></div></div>`;
             }
 
             let h = '';
