@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FireLog Lite v4.1</title>
+    <title>FireLog Lite v4.2</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
 
     <style>
+        /* --- 核心樣式 --- */
         :root {
             --bg-body: #f8fafc; --surface: #ffffff; --border: #e2e8f0; --text-main: #334155; --text-sub: #64748b;
         }
@@ -23,10 +23,15 @@
         }
 
         body { 
-            font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main);
-            user-select: none; -webkit-tap-highlight-color: transparent; 
-            padding-bottom: 110px !important; transition: background-color 0.3s;
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main);
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent; 
+            padding-bottom: 110px !important; 
+            transition: background-color 0.3s;
         }
+        
         .font-mono { font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px; }
 
         /* 視圖切換 */
@@ -44,20 +49,30 @@
         .nav-btn.active { color: #3b82f6; opacity: 1; } .dark .nav-btn.active { color: #60a5fa; }
         .nav-btn.active i { transform: translateY(-2px); }
 
-        /* 輸入框修復：適當的高度與字體，避免爆版 */
+        /* 輸入框 & 搜尋框修復 */
         input, textarea, select {
             background: var(--surface); border: 1px solid var(--border); color: var(--text-main);
-            border-radius: 10px; padding: 10px 12px; width: 100%; 
-            font-size: 16px; /* 保持16px防iOS縮放，但減少padding */
-            line-height: 1.5;
-            transition: 0.2s;
+            border-radius: 10px; padding: 12px; width: 100%; 
+            font-size: 16px; transition: 0.2s;
         }
         input:focus, textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15); }
 
-        /* 按鈕優化 */
+        /* 搜尋框容器 */
+        .search-wrapper { position: relative; width: 100%; }
+        .search-icon { 
+            position: absolute; 
+            left: 12px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            color: #94a3b8; 
+            pointer-events: none;
+        }
+        .search-input { padding-left: 40px !important; }
+
+        /* 按鈕系統 */
         .sys-btn { 
             background: var(--surface); border: 1px solid var(--border); color: var(--text-sub); 
-            font-weight: 600; border-radius: 10px; padding: 10px; 
+            font-weight: 600; border-radius: 10px; padding: 12px; 
             transition: all 0.1s; display: flex; align-items: center; justify-content: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 15px;
         }
@@ -65,25 +80,30 @@
         .sys-btn.active { background: #334155; color: #fff; border-color: #334155; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .dark .sys-btn.active { background: #3b82f6; border-color: #3b82f6; }
 
-        /* 卡片修復：防止內容溢出 */
+        /* 卡片與列表 (防爆版) */
         .log-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
             padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: transform 0.1s;
-            overflow: hidden; /* 防止內容撐開 */
+            overflow: hidden; /* 關鍵：防止內容溢出 */
+            display: flex; flex-direction: column; gap: 4px;
         }
         .log-card:active { transform: scale(0.98); background: #f8fafc; }
         .border-l-fire { border-left: 4px solid #ef4444; }
         .border-l-ems { border-left: 4px solid #0d9488; }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .card-title { font-weight: 700; font-size: 1.1rem; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-sub { font-size: 0.85rem; color: var(--text-sub); font-family: 'JetBrains Mono', monospace; display: flex; gap: 8px; align-items: center;}
 
         /* Tag Scroll */
         .tag-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
         .tag-btn { font-size: 0.8rem; padding: 6px 12px; border-radius: 99px; background: var(--surface); color: var(--text-sub); border: 1px solid var(--border); white-space: nowrap; font-weight: 500; }
-        .tag-btn:active { transform: scale(0.95); background: var(--bg-body); }
+        .tag-btn.active { background: #334155; color: white; border-color: #334155; }
+        .dark .tag-btn.active { background: #3b82f6; border-color: #3b82f6; }
 
         /* Toast */
-        .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-100px); background: #0f172a; color: white; padding: 10px 20px; rounded: 99px; font-size: 0.9rem; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.4s; z-index: 100; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-100px); background: #0f172a; color: white; padding: 12px 24px; rounded: 99px; font-size: 0.9rem; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 100; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); white-space: nowrap;}
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(20px); }
-        .dark .toast { background: #f8fafc; color: #0f172a; }
 
         /* 編輯模式 */
         .check-overlay { display: none; }
@@ -101,29 +121,28 @@
             <div class="w-1.5 h-6 bg-blue-600 rounded-sm"></div>
             <div>
                 <h1 class="font-bold tracking-tight text-sm uppercase text-slate-500 dark:text-slate-400">Duty Log</h1>
-                <div class="font-mono text-xs font-bold leading-none tracking-wide">LITE v4.1</div>
+                <div class="font-mono text-xs font-bold leading-none tracking-wide">LITE v4.2</div>
             </div>
         </div>
-        <button onclick="toggleTheme()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition border border-slate-200 dark:border-slate-700">
+        <button onclick="toggleTheme()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition border border-slate-200 dark:border-slate-700">
             <i id="themeIcon" class="fa-solid fa-moon text-slate-500 dark:text-slate-400"></i>
         </button>
     </div>
 
-    <!-- 1. Dashboard -->
+    <!-- 1. Dashboard (首頁) -->
     <div id="viewDashboard" class="view-panel active container mx-auto p-4 max-w-lg">
         <div class="grid grid-cols-2 gap-4 mb-6">
             <div onclick="switchView('viewFire')" class="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-red-500 shadow-sm active:scale-95 transition cursor-pointer flex flex-col items-center gap-2 group relative overflow-hidden">
-                <div class="absolute right-[-10px] top-[-10px] opacity-5 text-red-500 text-7xl"><i class="fa-solid fa-fire"></i></div>
                 <div class="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 text-2xl"><i class="fa-solid fa-fire"></i></div>
                 <div class="font-bold text-slate-800 dark:text-white">火警登錄</div>
             </div>
             <div onclick="switchView('viewEms')" class="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-teal-500 shadow-sm active:scale-95 transition cursor-pointer flex flex-col items-center gap-2 group relative overflow-hidden">
-                <div class="absolute right-[-10px] top-[-10px] opacity-5 text-teal-500 text-7xl"><i class="fa-solid fa-heart-pulse"></i></div>
                 <div class="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-500 text-2xl"><i class="fa-solid fa-heart-pulse"></i></div>
                 <div class="font-bold text-slate-800 dark:text-white">救護登錄</div>
             </div>
         </div>
 
+        <!-- 統計 -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 mb-6 shadow-sm">
             <div class="flex justify-between items-center mb-3">
                 <h3 class="font-bold text-sm text-slate-600 dark:text-slate-300">本月統計</h3>
@@ -159,7 +178,6 @@
         </div>
         
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 space-y-4">
-            <!-- 時間與地點 -->
             <div class="space-y-3">
                 <div class="flex gap-2">
                     <input type="datetime-local" id="fireDate" class="font-mono text-sm">
@@ -170,8 +188,6 @@
                     <button onclick="getGPS('fireLocation')" class="bg-slate-100 dark:bg-slate-800 px-3 rounded-lg text-slate-500 border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-location-crosshairs"></i></button>
                 </div>
             </div>
-
-            <!-- 類型按鈕 (Grid) -->
             <div>
                 <label class="text-xs font-bold text-slate-400 uppercase mb-2 block">案件類型</label>
                 <input type="hidden" id="fireType">
@@ -184,8 +200,6 @@
                     <button onclick="setBtn(this, 'fireType')" class="sys-btn">查看/其他</button>
                 </div>
             </div>
-
-            <!-- 狀況與車輛 -->
             <div>
                 <label class="text-xs font-bold text-slate-400 uppercase mb-2 block">狀況與車輛</label>
                 <div class="flex gap-2 mb-2">
@@ -196,7 +210,6 @@
                 </div>
                 <input type="text" id="fireVehicles" placeholder="出勤車輛 (如: 11, 91)" class="font-mono uppercase">
             </div>
-
             <button onclick="saveFire()" class="w-full py-3 bg-red-600 text-white rounded-xl font-bold shadow-lg active:scale-95 transition mt-2">儲存紀錄</button>
         </div>
     </div>
@@ -207,7 +220,6 @@
             <button onclick="switchView('viewDashboard')" class="w-9 h-9 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-slate-500"><i class="fa-solid fa-arrow-left"></i></button>
             <h2 class="text-lg font-bold text-slate-800 dark:text-white">新增救護</h2>
         </div>
-
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 space-y-4">
             <div class="space-y-3">
                 <div class="flex gap-2">
@@ -219,47 +231,24 @@
                     <button onclick="getGPS('emsLocation')" class="bg-slate-100 dark:bg-slate-800 px-3 rounded-lg text-slate-500 border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-location-crosshairs"></i></button>
                 </div>
             </div>
-
             <div>
                 <label class="text-xs font-bold text-slate-400 uppercase mb-2 block">案件類型</label>
                 <input type="hidden" id="emsType">
                 <div class="flex flex-wrap gap-2">
                     <button onclick="setEmsType(this)" class="sys-btn px-4 rounded-full text-sm">內科急病</button>
                     <button onclick="setEmsType(this)" class="sys-btn px-4 rounded-full text-sm">車禍</button>
-                    <button onclick="setEmsType(this)" class="sys-btn px-4 rounded-full text-sm">一般創傷</button>
+                    <button onclick="setEmsType(this)" class="sys-btn px-4 rounded-full text-sm">創傷</button>
                     <button onclick="setEmsType(this)" class="sys-btn px-4 rounded-full text-sm">路倒</button>
-                    <button onclick="setEmsType(this)" class="sys-btn px-4 rounded-full text-sm text-red-500 font-bold border-red-200">OHCA</button>
+                    <button onclick="setEmsType(this)" class="sys-btn px-4 rounded-full text-sm font-bold text-red-500 border-red-200">OHCA</button>
                     <button onclick="setEmsType(this)" class="sys-btn px-4 rounded-full text-sm">急產</button>
                     <button onclick="setEmsType(this)" class="sys-btn px-4 rounded-full text-sm">精神</button>
                 </div>
             </div>
-
-            <!-- GCS -->
-            <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                <label class="text-xs font-bold text-slate-400 uppercase mb-2 block">GCS</label>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2"><span class="text-xs font-bold w-3 text-slate-500">E</span><div class="flex gap-1 flex-1 overflow-x-auto pb-1 no-scrollbar"><button onclick="setGCS('E',4,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">4</button><button onclick="setGCS('E',3,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">3</button><button onclick="setGCS('E',2,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">2</button><button onclick="setGCS('E',1,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">1</button></div></div>
-                    <div class="flex items-center gap-2"><span class="text-xs font-bold w-3 text-slate-500">V</span><div class="flex gap-1 flex-1 overflow-x-auto pb-1 no-scrollbar"><button onclick="setGCS('V',5,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">5</button><button onclick="setGCS('V',4,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">4</button><button onclick="setGCS('V',3,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">3</button><button onclick="setGCS('V',2,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">2</button><button onclick="setGCS('V',1,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">1</button></div></div>
-                    <div class="flex items-center gap-2"><span class="text-xs font-bold w-3 text-slate-500">M</span><div class="flex gap-1 flex-1 overflow-x-auto pb-1 no-scrollbar"><button onclick="setGCS('M',6,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">6</button><button onclick="setGCS('M',5,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">5</button><button onclick="setGCS('M',4,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">4</button><button onclick="setGCS('M',3,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">3</button><button onclick="setGCS('M',2,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">2</button><button onclick="setGCS('M',1,this)" class="sys-btn w-8 h-8 rounded text-xs flex-shrink-0">1</button></div></div>
-                </div>
-                <input type="hidden" id="valE"><input type="hidden" id="valV"><input type="hidden" id="valM">
-            </div>
-
-            <div class="grid grid-cols-3 gap-2">
-                <div><label class="text-[10px] text-gray-400 block mb-1">SpO2</label><input type="number" id="vitalSpo2" placeholder="%" class="text-center font-mono p-2 text-sm"></div>
-                <div><label class="text-[10px] text-gray-400 block mb-1">BP</label><input type="text" id="vitalBp" placeholder="/" class="text-center font-mono p-2 text-sm"></div>
-                <div><label class="text-[10px] text-gray-400 block mb-1">HR</label><input type="number" id="vitalHr" placeholder="bpm" class="text-center font-mono p-2 text-sm"></div>
-            </div>
-
             <div>
                 <div class="flex gap-2 mb-2"><input type="text" id="emsReason" placeholder="主訴" class="flex-1"><input type="text" id="emsHospital" placeholder="送往醫院" class="w-1/3"></div>
-                <div class="tag-scroll mb-2">
-                    <button onclick="addTag('O2面罩')" class="tag-btn">+O2</button><button onclick="addTag('IV建立')" class="tag-btn">+IV</button><button onclick="addTag('N/S')" class="tag-btn">+N/S</button><button onclick="addTag('頸圈背板')" class="tag-btn">+頸圈</button><button onclick="addTag('AED')" class="tag-btn">+AED</button><button onclick="addTag('包紮')" class="tag-btn">+包紮</button><button onclick="addTag('拒送')" class="tag-btn text-red-500 border-red-200">+拒送</button>
-                </div>
-                <textarea id="emsNote" rows="3" placeholder="備註..." class="text-sm"></textarea>
+                <textarea id="emsNote" rows="3" placeholder="備註..." class="w-full"></textarea>
             </div>
-
-            <button onclick="saveEms()" class="w-full py-3 bg-teal-600 text-white rounded-xl font-bold shadow-lg active:scale-95 transition">確認儲存</button>
+            <button onclick="saveEms()" class="w-full py-3 bg-teal-600 text-white rounded-xl font-bold shadow-lg active:scale-95 transition text-lg mt-2">儲存紀錄</button>
         </div>
     </div>
 
@@ -279,9 +268,10 @@
             </div>
         </div>
 
-        <div class="relative mb-4">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400 text-sm"></i>
-            <input type="text" id="searchInput" onkeyup="renderList()" placeholder="搜尋..." class="pl-9 text-sm">
+        <!-- 修正的搜尋框 (垂直置中) -->
+        <div class="search-wrapper mb-4">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="searchInput" onkeyup="renderList()" placeholder="搜尋日期、地點、類別..." class="search-input">
         </div>
 
         <div id="historyList" class="space-y-3 pb-20"></div>
@@ -316,21 +306,6 @@
         <button onclick="switchView('viewHistory')" class="nav-btn" id="nav-hist"><i class="fa-solid fa-folder-open"></i><span>紀錄</span></button>
     </nav>
 
-    <!-- 詳細頁面 Modal -->
-    <div id="viewDetail" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-[60] hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
-        <div class="bg-white w-full max-w-lg h-[85vh] sm:h-auto sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-y-auto relative animate-[slideUp_0.3s_ease-out] dark:bg-slate-800">
-            <div class="sticky top-0 bg-white/95 backdrop-blur border-b p-4 flex justify-between items-center z-10 dark:bg-slate-800/95 dark:border-slate-700">
-                <h3 class="font-bold text-slate-800 text-lg dark:text-white">案件詳情</h3>
-                <button onclick="closeDetail()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="detailContent" class="p-5 space-y-4"></div>
-            <div class="p-4 border-t dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex gap-3 sticky bottom-0">
-                <button onclick="copyDetail()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold shadow">複製摘要</button>
-                <button onclick="closeDetail()" class="flex-1 py-3 bg-slate-800 text-white rounded-lg font-bold">關閉</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         let logs = []; 
         try { logs = JSON.parse(localStorage.getItem('fireLogLite')) || []; } catch(e) { localStorage.removeItem('fireLogLite'); }
@@ -339,7 +314,10 @@
 
         window.onload = () => {
             if(isDark) document.documentElement.classList.add('dark');
-            updateIcon(); updateDash(); document.getElementById('monthFilter').value = new Date().toISOString().slice(0,7);
+            updateIcon(); updateDash(); 
+            // 修正：不預設帶入月份，確保顯示所有資料
+            document.getElementById('monthFilter').value = ""; 
+            updateStorage();
         };
 
         function toggleTheme() { isDark=!isDark; document.documentElement.classList.toggle('dark'); localStorage.setItem('fireTheme', isDark?'dark':'light'); updateIcon(); }
@@ -353,9 +331,7 @@
             const map={'viewDashboard':'nav-dash','viewFire':'nav-fire','viewEms':'nav-ems','viewHistory':'nav-hist'};
             if(map[id]) document.getElementById(map[id]).classList.add('active');
             
-            // 進入表單時初始化時間
             if(id==='viewFire' || id==='viewEms') {
-                // 如果是空的才填入時間，方便補登連續資料
                 if(!document.getElementById(id==='viewFire'?'fireDate':'emsDate').value) {
                      const now = new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
                      const t = now.toISOString().slice(0,16);
@@ -364,9 +340,9 @@
                 }
             }
             if(id==='viewHistory') {
-                // 自動重置篩選器，避免新資料看不到
                 document.getElementById('searchInput').value = '';
-                // 這裡選擇不重置月份，方便連續查看某月資料
+                // 每次進入列表強制清空月份篩選，避免看不到資料
+                document.getElementById('monthFilter').value = "";
                 renderList();
             }
             if(id==='viewDashboard') updateDash();
@@ -397,18 +373,15 @@
         }
         function saveEms() {
             if(!document.getElementById('emsType').value) return alert('請選擇類型');
-            const e=document.getElementById('valE').value, v=document.getElementById('valV').value, m=document.getElementById('valM').value;
-            const gcs = (e&&v&&m) ? `E${e}V${v}M${m}` : '-';
-            const l = { id: Date.now(), cat:'ems', date:document.getElementById('emsDate').value, type:document.getElementById('emsType').value, loc:document.getElementById('emsLocation').value, main:document.getElementById('emsReason').value, to:document.getElementById('emsHospital').value, note:document.getElementById('emsNote').value, vitals: `GCS:${gcs} SpO2:${document.getElementById('vitalSpo2').value||'-'}% BP:${document.getElementById('vitalBp').value||'-'} HR:${document.getElementById('vitalHr').value||'-'}` };
+            const l = { id: Date.now(), cat:'ems', date:document.getElementById('emsDate').value, type:document.getElementById('emsType').value, loc:document.getElementById('emsLocation').value, main:document.getElementById('emsReason').value, to:document.getElementById('emsHospital').value, note:document.getElementById('emsNote').value, vitals: `SpO2:${document.getElementById('vitalSpo2').value||'-'}% BP:${document.getElementById('vitalBp').value||'-'} HR:${document.getElementById('vitalHr').value||'-'}` };
             pushLog(l, 'viewEms');
         }
         function pushLog(l, formId) {
             try { 
                 logs.unshift(l); localStorage.setItem('fireLogLite', JSON.stringify(logs)); 
-                // 成功後清空表單，但保留在該頁面以便補登下一筆，只重置內容
                 resetForm(formId); 
                 showToast('已儲存，可繼續輸入'); 
-                // 強制更新 Dash 數據以防萬一
+                // 儲存後不跳轉，但確保重新整理數據
                 updateDash();
             } catch(e) { alert('儲存空間不足'); }
         }
@@ -433,7 +406,7 @@
             logs.slice(0,3).forEach(l => {
                 const c = l.cat==='fire'?'text-red-500':'text-teal-500';
                 const i = l.cat==='fire'?'fa-fire':'fa-heart-pulse';
-                list.innerHTML += `<div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between shadow-sm"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center bg-slate-50 dark:bg-slate-700/50"><i class="fa-solid ${i} ${c}"></i></div><div><div class="font-bold text-sm text-slate-700 dark:text-slate-200">${l.type}</div><div class="text-[10px] text-slate-400 font-mono">${l.date.slice(5,10)}</div></div></div></div>`;
+                list.innerHTML += `<div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between shadow-sm"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center bg-slate-50 dark:bg-slate-700/50"><i class="fa-solid ${i} ${c}"></i></div><div><div class="font-bold text-sm text-slate-700 dark:text-slate-200">${l.type}</div><div class="text-[10px] text-slate-400 font-mono">${l.date.replace('T', ' ')}</div></div></div></div>`;
             });
         }
 
@@ -443,13 +416,20 @@
             chartInst = new Chart(ctx, { type: 'doughnut', data: { labels: ['火警','救護'], datasets:[{data:[f, e], backgroundColor:['#ef4444','#0d9488'], borderWidth:0}] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, cutout:'70%' } });
         }
 
-        // History
+        function updateStorage() {
+            let total = 0; for(let x in localStorage) { if(localStorage.hasOwnProperty(x)) total += (localStorage[x].length * 2)/1024/1024; }
+            console.log(`Used: ${total.toFixed(2)} MB`);
+        }
+
         function renderList() {
-            const list = document.getElementById('historyList'); const key = document.getElementById('searchInput').value.toLowerCase(); const month = document.getElementById('monthFilter').value;
+            const list = document.getElementById('historyList'); 
+            const key = document.getElementById('searchInput').value.toLowerCase(); 
+            const month = document.getElementById('monthFilter').value; // YYYY-MM
             list.innerHTML = ''; list.className = isEdit ? 'space-y-3 edit-mode' : 'space-y-3';
             
             const filtered = logs.filter(l => {
                 if(currentFilter!=='all' && l.cat!==currentFilter) return false;
+                // 如果 month 有值才篩選，空白則顯示所有
                 if(month && !l.date.startsWith(month)) return false;
                 return JSON.stringify(l).toLowerCase().includes(key);
             });
@@ -457,9 +437,10 @@
             if(filtered.length===0) { list.innerHTML='<div class="text-center text-gray-400 mt-10">無資料</div>'; return; }
 
             filtered.forEach(l => {
-                // 修復：日期與時間分行顯示，並使用等寬字體，避免擠壓
+                // 優化：拆分日期與時間，避免擠壓
                 const dateParts = l.date.split('T');
-                const dateDisplay = `<div class="text-right"><div class="font-mono font-bold text-slate-700 dark:text-slate-300 text-sm">${dateParts[0]}</div><div class="font-mono text-xs text-slate-400">${dateParts[1]}</div></div>`;
+                const dateStr = dateParts[0]; // YYYY-MM-DD
+                const timeStr = dateParts[1]; // HH:mm
                 
                 const clr = l.cat==='fire'?'border-l-fire':'border-l-ems';
                 const tag = l.cat==='fire'?'text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded':'text-teal-500 bg-teal-50 dark:bg-teal-900/20 px-2 py-0.5 rounded';
@@ -471,26 +452,19 @@
                         <div class="check-overlay absolute inset-0 bg-white/50 dark:bg-black/50 items-center justify-end pr-4 ${selIds.has(l.id)?'opacity-100':'opacity-0'}"><div class="w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center ${selIds.has(l.id)?'bg-blue-500 border-blue-500':''}"><i class="fa-solid fa-check text-white text-xs"></i></div></div>
                         
                         <div class="flex justify-between items-start mb-2">
-                            <span class="text-[10px] font-bold uppercase tracking-wider ${tag} mt-1 inline-block">${l.type}</span>
-                            ${dateDisplay}
+                            <span class="text-[10px] font-bold uppercase tracking-wider ${tag} mt-1">${l.type}</span>
+                            <div class="text-right">
+                                <div class="font-mono font-bold text-slate-700 dark:text-slate-300 text-sm">${dateStr}</div>
+                                <div class="font-mono text-xs text-slate-400">${timeStr}</div>
+                            </div>
                         </div>
-                        <div class="font-bold text-lg text-slate-800 dark:text-slate-100 mb-1 truncate">${l.loc||'-'}</div>
+                        <div class="card-title mb-1">${l.loc||'-'}</div>
                         <div class="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">${sub}</div>
                     </div>`;
             });
         }
 
-        function clickItem(id) { if(isEdit) { if(selIds.has(id)) selIds.delete(id); else selIds.add(id); renderList(); document.getElementById('selectCount').innerText=selIds.size; } else { showDetail(id); } }
-        function showDetail(id) {
-            const l = logs.find(i=>i.id===id); curLog=l; if(!l)return;
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.loc)}`;
-            let h = '';
-            if(l.cat==='fire') { h = `<div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold text-red-500">${l.type}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${l.date.replace('T',' ')}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapUrl}" target="_blank" class="font-bold text-lg text-blue-500 hover:underline dark:text-blue-400">${l.loc}</a></div><div><div class="text-xs text-slate-400">車輛</div><div>${l.car||'-'}</div></div><div><div class="text-xs text-slate-400">結果</div><div class="font-bold text-red-600 dark:text-red-400">${l.res||'-'}</div></div></div>`; } 
-            else { h = `<div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold text-teal-500">${l.type}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${l.date.replace('T',' ')}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapUrl}" target="_blank" class="font-bold text-lg text-blue-500 hover:underline dark:text-blue-400">${l.loc}</a></div><div class="col-span-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-100 dark:border-slate-800"><div class="text-xs text-slate-400 mb-1">生命徵象</div><div class="font-mono font-bold tracking-wide">${l.vitals}</div></div><div><div class="text-xs text-slate-400">主訴</div><div>${l.main||'-'}</div></div><div><div class="text-xs text-slate-400">送往</div><div>${l.to||'-'}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">備註</div><div class="text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl">${l.note||'-'}</div></div></div>`; }
-            document.getElementById('detailContent').innerHTML=h; document.getElementById('viewDetail').classList.remove('hidden');
-        }
-        function closeDetail(){ document.getElementById('viewDetail').classList.add('hidden'); }
-        function copyDetail(){ const l=curLog; if(!l)return; const t = l.cat==='fire' ? `【火警】${l.date.replace('T',' ')} | ${l.loc} | ${l.type} | ${l.res}` : `【救護】${l.date.replace('T',' ')} | ${l.loc} | ${l.type} | 主訴:${l.main} | 送往:${l.to} | ${l.vitals}`; navigator.clipboard.writeText(t).then(()=>showToast('已複製')); }
+        function clickItem(id) { if(isEdit) { if(selIds.has(id)) selIds.delete(id); else selIds.add(id); renderList(); document.getElementById('selectCount').innerText=selIds.size; } else { /* No detail view in Lite v4 */ } }
 
         function toggleEdit() { isEdit=!isEdit; selIds.clear(); document.getElementById('batchAction').classList.toggle('hidden', !isEdit); document.getElementById('editToggleBtn').innerText = isEdit ? '完成' : '編輯'; renderList(); }
         function deleteSelected() { if(confirm(`刪除 ${selIds.size} 筆？`)) { logs=logs.filter(l=>!selIds.has(l.id)); localStorage.setItem('fireLogLite', JSON.stringify(logs)); toggleEdit(); renderList(); updateDash(); } }
