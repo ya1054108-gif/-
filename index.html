@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FireLog Pro v5.1</title>
+    <title>FireLog Pro v6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -31,7 +31,7 @@
         .glass-header { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); }
         .photo-preview { background-size: cover; background-position: center; }
 
-        /* 戰術畫板 Grid (修正版) */
+        /* 戰術畫板 Grid */
         .tac-wrapper { width: 100%; max-width: 350px; margin: 0 auto; aspect-ratio: 1/1; }
         .tac-grid { 
             display: grid; 
@@ -49,7 +49,7 @@
             align-items: center; 
             justify-content: center; 
             cursor: pointer; 
-            font-size: 1.2rem; /* 圖示大小 */
+            font-size: 1.2rem;
         }
         .tac-cell:active { background: #334155; }
         
@@ -64,17 +64,12 @@
         .icon-grass { color: #84cc16; }
         .icon-hydrant { color: #fbbf24; }
         .icon-car { color: #f87171; text-shadow: 0 0 2px black; }
-        .icon-water { color: #3b82f6; font-size: 0.8rem !important; } /* 水線細一點 */
+        .icon-water { color: #3b82f6; font-size: 0.8rem !important; }
         .icon-victim { color: #facc15; animation: bounce 1s infinite; }
         
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 
-        /* 編輯選單 */
-        .check-overlay { display: none; }
-        .edit-mode .check-overlay { display: flex; }
-        .edit-mode .log-card { transform: scale(0.98); }
-        
         /* Dark Mode Colors */
         .dark .bg-slate-50 { background-color: #0f172a; }
         .dark .bg-white { background-color: #1e293b; color: #f1f5f9; }
@@ -86,8 +81,8 @@
     <!-- Header -->
     <div class="glass-header text-white p-3 sticky top-0 z-50 shadow-md border-b border-slate-700 flex justify-between items-center">
         <div class="flex items-center gap-2" onclick="switchView('viewDashboard')">
-            <div class="w-2 h-6 bg-orange-500 rounded-sm"></div>
-            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v5.1</span></h1>
+            <div class="w-2 h-6 bg-yellow-500 rounded-sm"></div>
+            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v6.0</span></h1>
         </div>
         <div class="flex items-center gap-3">
             <button onclick="toggleTheme()" class="text-slate-400 hover:text-white transition"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
@@ -110,11 +105,17 @@
             </div>
         </div>
 
-        <div class="bg-slate-800 text-white p-4 rounded shadow-sm mb-4 flex justify-between items-center cursor-pointer active:opacity-90" onclick="switchView('viewHistory')">
-            <div><div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Cases</div><div class="text-2xl font-mono font-bold" id="dashTotal">0</div></div>
+        <!-- 工具箱按鈕 (NEW) -->
+        <button onclick="switchView('viewTools')" class="w-full h-16 bg-slate-800 text-white rounded-xl shadow-lg mb-4 flex items-center justify-center gap-3 active:scale-95 transition">
+            <i class="fa-solid fa-toolbox text-yellow-400 text-xl"></i>
+            <span class="font-bold">現場計算工具 (SCBA/Water)</span>
+        </button>
+
+        <div class="bg-white p-4 rounded shadow-sm mb-4 flex justify-between items-center cursor-pointer active:opacity-90 dark:bg-slate-800" onclick="switchView('viewHistory')">
+            <div><div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Cases</div><div class="text-2xl font-mono font-bold text-slate-800 dark:text-white" id="dashTotal">0</div></div>
             <div class="flex gap-4 text-right">
-                <div><div class="text-[10px] text-red-400">FIRE</div><div class="font-mono font-bold" id="dashFire">0</div></div>
-                <div><div class="text-[10px] text-teal-400">EMS</div><div class="font-mono font-bold" id="dashEms">0</div></div>
+                <div><div class="text-[10px] text-red-400">FIRE</div><div class="font-mono font-bold text-slate-800 dark:text-white" id="dashFire">0</div></div>
+                <div><div class="text-[10px] text-teal-400">EMS</div><div class="font-mono font-bold text-slate-800 dark:text-white" id="dashEms">0</div></div>
                 <div class="flex items-center text-slate-500"><i class="fa-solid fa-chevron-right"></i></div>
             </div>
         </div>
@@ -132,61 +133,27 @@
             </div>
             <form onsubmit="saveFire(event)" class="p-4 space-y-4">
                 <div class="grid grid-cols-3 gap-2">
-                    <div class="col-span-3"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Time & Loc</label><input type="datetime-local" id="fireDate" class="w-full p-2 bg-slate-50 border rounded text-sm font-mono"></div>
-                    <div class="col-span-3"><input type="text" id="fireLocation" placeholder="地點" class="w-full p-2 border rounded text-sm" required></div>
+                    <div class="col-span-3"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Time</label><input type="datetime-local" id="fireDate" class="w-full p-2 bg-slate-50 border rounded text-sm font-mono"></div>
+                    <div class="col-span-3">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Loc</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="fireLocation" placeholder="地點" class="w-full p-2 border rounded text-sm" required>
+                            <button type="button" onclick="getGPS('fireLocation')" class="bg-slate-200 text-slate-600 px-3 rounded dark:bg-slate-700 dark:text-slate-300"><i class="fa-solid fa-location-crosshairs"></i></button>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- 戰術畫板入口 -->
                 <div class="bg-slate-800 p-3 rounded text-center">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Tactical Board (兵棋推演)</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Tactical Board</label>
                     <button type="button" onclick="openTacticsEditor()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-3 px-4 rounded w-full flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
                         <i class="fa-solid fa-pen-ruler"></i> 點擊繪製現場圖
                     </button>
                     <div id="tacticsStatus" class="text-[10px] text-green-400 mt-2 hidden font-bold"><i class="fa-solid fa-check"></i> 已儲存戰術圖</div>
                     <input type="hidden" id="fireTacticsData">
                 </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">My Role</label>
-                    <input type="hidden" id="fireRole">
-                    <div class="grid grid-cols-4 gap-2">
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">瞄子手</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">副瞄子</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">帶隊官</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">司機</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">搜救</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">水源</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">傳令</button>
-                        <button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">其他</button>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Type</label>
-                    <input type="hidden" id="fireType">
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">住宅火警</button>
-                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">工廠倉庫</button>
-                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">雜草廢棄物</button>
-                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">車輛火警</button>
-                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">高層建築</button>
-                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">誤報/謊報</button>
-                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">船舶航空</button>
-                        <button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">其他</button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vehicles</label><input type="text" id="fireVehicles" placeholder="11, 91" class="w-full p-2 border rounded text-sm font-mono uppercase"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label><select id="fireStatus" class="w-full p-2 border rounded text-sm bg-white dark:bg-slate-800"><option value="成災">成災</option><option value="未成災">未成災</option><option value="誤報">誤報</option><option value="查看">查看</option></select></div>
-                </div>
-                
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Photo</label>
-                    <div class="flex items-center gap-3">
-                        <label class="flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed border-slate-300 rounded cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"><i class="fa-solid fa-camera text-slate-400"></i><input type="file" accept="image/*" class="hidden" onchange="handlePhoto(this, 'firePhotoPreview', 'firePhotoData')"></label>
-                        <div id="firePhotoPreview" class="w-20 h-20 rounded border bg-slate-100 photo-preview hidden" onclick="clearPhoto('firePhotoPreview', 'firePhotoData')"></div>
-                        <input type="hidden" id="firePhotoData">
-                    </div>
-                </div>
+                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">My Role</label><input type="hidden" id="fireRole"><div class="grid grid-cols-4 gap-2"><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">瞄子手</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">副瞄子</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">帶隊官</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">司機</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">搜救</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">水源</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">傳令</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-2 rounded text-xs">其他</button></div></div>
+                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Type</label><input type="hidden" id="fireType"><div class="grid grid-cols-2 gap-2"><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">住宅火警</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">工廠倉庫</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">雜草廢棄物</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">車輛火警</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">高層建築</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">誤報/謊報</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">船舶航空</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded text-sm text-left">其他</button></div></div>
+                <div class="grid grid-cols-2 gap-3"><div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vehicles</label><input type="text" id="fireVehicles" placeholder="11, 91" class="w-full p-2 border rounded text-sm font-mono uppercase"></div><div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label><select id="fireStatus" class="w-full p-2 border rounded text-sm bg-white dark:bg-slate-800"><option value="成災">成災</option><option value="未成災">未成災</option><option value="誤報">誤報</option><option value="查看">查看</option></select></div></div>
+                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Photo</label><div class="flex items-center gap-3"><label class="flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed border-slate-300 rounded cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"><i class="fa-solid fa-camera text-slate-400"></i><input type="file" accept="image/*" class="hidden" onchange="handlePhoto(this, 'firePhotoPreview', 'firePhotoData')"></label><div id="firePhotoPreview" class="w-20 h-20 rounded border bg-slate-100 photo-preview hidden" onclick="clearPhoto('firePhotoPreview', 'firePhotoData')"></div><input type="hidden" id="firePhotoData"></div></div>
                 <button type="submit" class="w-full py-3 bg-slate-800 text-white rounded font-bold hover:bg-slate-900 mt-4 dark:bg-blue-600">CONFIRM ENTRY</button>
             </form>
         </div>
@@ -202,18 +169,12 @@
             <form onsubmit="saveEms(event)" class="p-3 space-y-4">
                 <div class="flex gap-2">
                     <input type="datetime-local" id="emsDate" class="w-1/2 p-2 bg-slate-50 border rounded text-xs font-mono">
-                    <input type="text" id="emsLocation" placeholder="地點" class="w-1/2 p-2 border rounded text-xs" required>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">My Role</label>
-                    <input type="hidden" id="emsRole">
-                    <div class="flex gap-2">
-                        <button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-2 rounded text-xs text-center">主手</button>
-                        <button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-2 rounded text-xs text-center">副手</button>
-                        <button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-2 rounded text-xs text-center">駕駛</button>
-                        <button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-2 rounded text-xs text-center">實習</button>
+                    <div class="w-1/2 flex gap-1">
+                        <input type="text" id="emsLocation" placeholder="地點" class="w-full p-2 border rounded text-xs" required>
+                        <button type="button" onclick="getGPS('emsLocation')" class="bg-slate-200 text-slate-600 px-2 rounded dark:bg-slate-700 dark:text-slate-300"><i class="fa-solid fa-location-crosshairs"></i></button>
                     </div>
                 </div>
+                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">My Role</label><input type="hidden" id="emsRole"><div class="flex gap-2"><button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-2 rounded text-xs text-center">主手</button><button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-2 rounded text-xs text-center">副手</button><button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-2 rounded text-xs text-center">駕駛</button><button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-2 rounded text-xs text-center">實習</button></div></div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Case Type</label>
                     <input type="hidden" id="emsType">
@@ -240,20 +201,44 @@
                     <div class="flex flex-wrap gap-1 mb-2"><button type="button" onclick="appendNote('O2面罩')" class="text-[10px] bg-white border px-2 py-1 rounded dark:text-slate-300 dark:border-slate-600">+O2</button><button type="button" onclick="appendNote('IV建立')" class="text-[10px] bg-white border px-2 py-1 rounded dark:text-slate-300 dark:border-slate-600">+IV</button><button type="button" onclick="appendNote('頸圈長背板')" class="text-[10px] bg-white border px-2 py-1 rounded dark:text-slate-300 dark:border-slate-600">+頸圈</button><button type="button" onclick="appendNote('AED監測')" class="text-[10px] bg-white border px-2 py-1 rounded dark:text-slate-300 dark:border-slate-600">+AED</button><button type="button" onclick="appendNote('拒送')" class="text-[10px] bg-red-50 border border-red-200 text-red-600 px-2 py-1 rounded dark:bg-red-900/30 dark:border-red-800 dark:text-red-300">+拒送</button></div>
                     <textarea id="emsNote" rows="2" class="w-full p-2 border rounded text-sm" placeholder="備註..."></textarea>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Photo</label>
-                    <div class="flex items-center gap-3">
-                        <label class="flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed border-slate-300 rounded cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"><i class="fa-solid fa-camera text-slate-400"></i><input type="file" accept="image/*" class="hidden" onchange="handlePhoto(this, 'emsPhotoPreview', 'emsPhotoData')"></label>
-                        <div id="emsPhotoPreview" class="w-20 h-20 rounded border bg-slate-100 photo-preview hidden" onclick="clearPhoto('emsPhotoPreview', 'emsPhotoData')"></div>
-                        <input type="hidden" id="emsPhotoData">
-                    </div>
-                </div>
+                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Photo</label><div class="flex items-center gap-3"><label class="flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed border-slate-300 rounded cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"><i class="fa-solid fa-camera text-slate-400"></i><input type="file" accept="image/*" class="hidden" onchange="handlePhoto(this, 'emsPhotoPreview', 'emsPhotoData')"></label><div id="emsPhotoPreview" class="w-20 h-20 rounded border bg-slate-100 photo-preview hidden" onclick="clearPhoto('emsPhotoPreview', 'emsPhotoData')"></div><input type="hidden" id="emsPhotoData"></div></div>
                 <button type="submit" class="w-full py-3 bg-teal-600 text-white rounded font-bold hover:bg-teal-700 shadow-md">SAVE RECORD</button>
             </form>
         </div>
     </div>
 
-    <!-- 4. History -->
+    <!-- 4. 工具箱 (Tools - NEW) -->
+    <div id="viewTools" class="view-panel container mx-auto p-3 max-w-lg">
+        <div class="flex items-center gap-2 mb-4">
+            <button onclick="switchView('viewDashboard')" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-slate-600 dark:text-slate-300 dark:bg-slate-700"><i class="fa-solid fa-arrow-left"></i></button>
+            <h2 class="text-lg font-bold text-slate-800 dark:text-white">現場工具箱</h2>
+        </div>
+
+        <!-- SCBA Calculator -->
+        <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border-l-4 border-blue-500 dark:bg-slate-800 dark:border-blue-600">
+            <h3 class="font-bold text-slate-700 mb-3 dark:text-slate-200"><i class="fa-solid fa-mask-ventilator mr-2"></i>SCBA 氣瓶計算</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div><label class="text-xs text-gray-400">氣瓶容量 (L)</label><select id="scbaVol" class="w-full p-2 border rounded text-sm"><option value="6.8">6.8 L</option><option value="9">9.0 L</option></select></div>
+                <div><label class="text-xs text-gray-400">當前壓力 (BAR)</label><input type="number" id="scbaBar" class="w-full p-2 border rounded text-sm" placeholder="如 280"></div>
+            </div>
+            <button onclick="calcScba()" class="w-full bg-blue-600 text-white py-2 rounded font-bold mb-2">計算剩餘時間</button>
+            <div id="scbaResult" class="text-center font-mono font-bold text-xl text-slate-800 hidden dark:text-blue-300"></div>
+            <div class="text-[10px] text-gray-400 mt-1">*假設每分鐘耗氣 40L (重度工作)</div>
+        </div>
+
+        <!-- Water Calculator -->
+        <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border-l-4 border-blue-400 dark:bg-slate-800 dark:border-blue-500">
+            <h3 class="font-bold text-slate-700 mb-3 dark:text-slate-200"><i class="fa-solid fa-faucet-drip mr-2"></i>水源時間計算</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div><label class="text-xs text-gray-400">車載水量 (噸)</label><input type="number" id="waterTon" class="w-full p-2 border rounded text-sm" placeholder="如 3"></div>
+                <div><label class="text-xs text-gray-400">出水流量 (L/min)</label><input type="number" id="waterFlow" class="w-full p-2 border rounded text-sm" placeholder="如 400"></div>
+            </div>
+            <button onclick="calcWater()" class="w-full bg-blue-500 text-white py-2 rounded font-bold mb-2">計算射水時間</button>
+            <div id="waterResult" class="text-center font-mono font-bold text-xl text-slate-800 hidden dark:text-blue-300"></div>
+        </div>
+    </div>
+
+    <!-- 5. History & Stats -->
     <div id="viewHistory" class="view-panel container mx-auto p-3 max-w-lg">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2"><button onclick="switchView('viewDashboard')" class="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:text-slate-300"><i class="fa-solid fa-arrow-left"></i></button><h2 class="text-lg font-bold text-slate-800 dark:text-slate-200">勤務資料庫</h2></div>
@@ -280,22 +265,14 @@
         </div>
     </div>
 
-    <!-- 5. 戰術畫板 Modal (5.1 FIXED) -->
+    <!-- 6. 戰術畫板 Modal -->
     <div id="viewTacticsEditor" class="fixed inset-0 bg-slate-900 z-[70] hidden flex flex-col">
         <div class="p-3 bg-slate-800 text-white flex justify-between items-center border-b border-slate-700">
             <h3 class="font-bold">戰術繪圖板 (8x8)</h3>
             <button onclick="closeTactics()" class="text-slate-400 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
         <div class="flex-1 flex flex-col items-center justify-center p-4 bg-slate-900 w-full overflow-hidden">
-            
-            <!-- 戰術網格 (確保正方形且可見) -->
-            <div class="tac-wrapper mb-4">
-                <div class="tac-grid" id="tacticsGrid">
-                    <!-- JS 生成 -->
-                </div>
-            </div>
-
-            <!-- 工具列 -->
+            <div class="tac-wrapper mb-4"><div class="tac-grid" id="tacticsGrid"></div></div>
             <div class="w-full max-w-[350px]">
                 <div class="flex gap-3 p-2 bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-x-auto justify-between mb-3">
                     <button onclick="setTool('house')" class="tool-btn w-10 h-10 rounded-lg bg-slate-700 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-house"></i></button>
@@ -312,7 +289,6 @@
                     <button onclick="setTool('empty')" class="tool-btn w-10 h-10 rounded-lg bg-slate-900 text-slate-500 border border-slate-700 flex items-center justify-center"><i class="fa-solid fa-eraser"></i></button>
                 </div>
             </div>
-            
             <div class="flex justify-between w-full max-w-[350px] mt-2">
                 <span class="text-[10px] text-slate-500">點選工具 -> 點擊格子</span>
                 <button onclick="clearTactics()" class="text-[10px] text-red-400 underline">清空畫布</button>
@@ -323,7 +299,7 @@
         </div>
     </div>
 
-    <!-- 6. 詳細頁面 (含戰術圖) -->
+    <!-- 7. 詳細頁面 -->
     <div id="viewDetail" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-[60] hidden flex items-end sm:items-center justify-center">
         <div class="bg-white w-full max-w-lg h-[90vh] sm:h-auto sm:rounded-xl rounded-t-xl overflow-y-auto shadow-2xl relative animate-[slideUp_0.3s_ease-out] dark:bg-slate-800">
             <div class="sticky top-0 bg-white/95 backdrop-blur border-b p-4 flex justify-between items-center z-10 dark:bg-slate-800/95 dark:border-slate-700">
@@ -346,9 +322,8 @@
         let currentDetailLog = null;
         let isDark = localStorage.getItem('fireLogTheme') === 'dark';
         
-        // 戰術變數
         let currentTactics = Array(64).fill('empty');
-        let currentTool = 'fire'; // 預設工具
+        let currentTool = 'fire';
 
         window.onload = () => { 
             if(isDark) document.documentElement.classList.add('dark');
@@ -389,7 +364,44 @@
             if (viewId === 'viewDashboard') { updateDashboard(); }
         }
 
-        // === 戰術畫板邏輯 (v5.1 Fixed) ===
+        // === 工具箱計算 (NEW) ===
+        function calcScba() {
+            const vol = parseFloat(document.getElementById('scbaVol').value);
+            const bar = parseFloat(document.getElementById('scbaBar').value);
+            if(!bar) return alert('請輸入壓力');
+            // 公式: (壓力 x 氣瓶容積 / 40L耗氣量) - 10分鐘安全餘量 (簡單估算)
+            // 實際: 空氣量 = P * V. 使用時間 = 空氣量 / 40.
+            const totalAir = vol * bar;
+            const minutes = Math.floor(totalAir / 40);
+            const safeMinutes = Math.max(0, minutes - 10); // 扣除撤退時間
+            document.getElementById('scbaResult').innerHTML = `極限: ${minutes}分 <span class="text-xs text-gray-400">|</span> 安全: ${safeMinutes}分`;
+            document.getElementById('scbaResult').classList.remove('hidden');
+        }
+
+        function calcWater() {
+            const ton = parseFloat(document.getElementById('waterTon').value);
+            const flow = parseFloat(document.getElementById('waterFlow').value);
+            if(!ton || !flow) return alert('請輸入數值');
+            const liters = ton * 1000;
+            const minutes = (liters / flow).toFixed(1);
+            document.getElementById('waterResult').innerText = `約 ${minutes} 分鐘`;
+            document.getElementById('waterResult').classList.remove('hidden');
+        }
+
+        // === GPS 定位 (NEW) ===
+        function getGPS(inputId) {
+            if (!navigator.geolocation) return alert('瀏覽器不支援定位');
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const coord = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+                    const input = document.getElementById(inputId);
+                    input.value = input.value ? input.value + ` (${coord})` : coord;
+                },
+                (err) => alert('無法獲取位置: ' + err.message)
+            );
+        }
+
+        // === 戰術畫板 ===
         function initTacticsGrid() {
             const grid = document.getElementById('tacticsGrid');
             grid.innerHTML = '';
@@ -397,27 +409,12 @@
                 const cell = document.createElement('div');
                 cell.className = 'tac-cell';
                 cell.dataset.idx = i;
-                cell.onclick = () => { 
-                    currentTactics[i] = currentTool; 
-                    renderTacticsCell(cell, currentTool);
-                };
+                cell.onclick = () => { currentTactics[i] = currentTool; renderTacticsCell(cell, currentTool); };
                 grid.appendChild(cell);
             }
         }
         function renderTacticsCell(el, type) {
-            const icons = {
-                'empty': '', 
-                'house': '<i class="fa-solid fa-house icon-house"></i>',
-                'factory': '<i class="fa-solid fa-industry icon-factory"></i>',
-                'grass': '<i class="fa-solid fa-tree icon-grass"></i>',
-                'fire': '<i class="fa-solid fa-fire icon-fire"></i>',
-                'smoke': '<i class="fa-solid fa-cloud icon-smoke"></i>',
-                'car': '<i class="fa-solid fa-truck icon-car"></i>',
-                'water': '<i class="fa-solid fa-faucet-drip icon-water"></i>',
-                'hydrant': '<i class="fa-solid fa-fire-hydrant icon-hydrant"></i>',
-                'victim': '<i class="fa-solid fa-person-falling icon-victim"></i>',
-                'ems': '<i class="fa-solid fa-truck-medical icon-ems"></i>'
-            };
+            const icons = {'empty':'','house':'<i class="fa-solid fa-house icon-house"></i>','factory':'<i class="fa-solid fa-industry icon-factory"></i>','grass':'<i class="fa-solid fa-tree icon-grass"></i>','fire':'<i class="fa-solid fa-fire icon-fire"></i>','smoke':'<i class="fa-solid fa-cloud icon-smoke"></i>','car':'<i class="fa-solid fa-truck icon-car"></i>','water':'<i class="fa-solid fa-faucet-drip icon-water"></i>','hydrant':'<i class="fa-solid fa-fire-hydrant icon-hydrant"></i>','victim':'<i class="fa-solid fa-person-falling icon-victim"></i>','ems':'<i class="fa-solid fa-truck-medical icon-ems"></i>'};
             el.innerHTML = icons[type] || '';
         }
         function setTool(tool) {
@@ -426,20 +423,16 @@
             event.currentTarget.classList.add('active');
         }
         function clearTactics() {
-            if(confirm('確定清空畫布？')) {
+            if(confirm('清空畫布？')) {
                 currentTactics.fill('empty');
-                const cells = document.querySelectorAll('#tacticsGrid .tac-cell');
-                cells.forEach(c => c.innerHTML = '');
+                document.querySelectorAll('#tacticsGrid .tac-cell').forEach(c => c.innerHTML = '');
             }
         }
         function openTacticsEditor() {
             const existing = document.getElementById('fireTacticsData').value;
-            if(existing) currentTactics = JSON.parse(existing);
-            else currentTactics.fill('empty');
-            
+            if(existing) currentTactics = JSON.parse(existing); else currentTactics.fill('empty');
             const cells = document.querySelectorAll('#tacticsGrid .tac-cell');
             cells.forEach((c, i) => renderTacticsCell(c, currentTactics[i]));
-            
             document.getElementById('viewTacticsEditor').classList.remove('hidden');
         }
         function saveTactics() {
@@ -449,7 +442,7 @@
         }
         function closeTactics() { document.getElementById('viewTacticsEditor').classList.add('hidden'); }
 
-        // === 表單邏輯 ===
+        // === 表單與系統 ===
         function handlePhoto(input, prevId, dataId) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -466,163 +459,62 @@
         }
         function clearPhoto(pid, did) { document.getElementById(did).value=''; document.getElementById(pid).classList.add('hidden'); }
         function setBtn(btn, id) { Array.from(btn.parentElement.children).forEach(c=>c.classList.remove('active')); btn.classList.add('active'); document.getElementById(id).value=btn.innerText; }
-        
-        function setEmsType(btn) {
-            setBtn(btn, 'emsType');
-            const roscDiv = document.getElementById('roscSection');
-            if(btn.innerText === 'OHCA') roscDiv.classList.remove('hidden');
-            else { roscDiv.classList.add('hidden'); document.getElementById('isRosc').checked = false; }
-        }
+        function setEmsType(btn) { setBtn(btn, 'emsType'); const r=document.getElementById('roscSection'); if(btn.innerText==='OHCA') r.classList.remove('hidden'); else {r.classList.add('hidden'); document.getElementById('isRosc').checked=false;} }
         function appendNote(t) { const n=document.getElementById('emsNote'); n.value+=(n.value?' ':'')+t; }
 
         function saveFire(e) {
             e.preventDefault(); if(!document.getElementById('fireType').value) return alert('請選擇種類');
-            saveLog({
-                id: Date.now(), cat: 'fire', date: document.getElementById('fireDate').value,
-                type: document.getElementById('fireType').value, loc: document.getElementById('fireLocation').value,
-                car: document.getElementById('fireVehicles').value, res: document.getElementById('fireStatus').value,
-                role: document.getElementById('fireRole').value || '未填',
-                photo: document.getElementById('firePhotoData').value,
-                tactics: document.getElementById('fireTacticsData').value
-            });
+            saveLog({ id: Date.now(), cat: 'fire', date: document.getElementById('fireDate').value, type: document.getElementById('fireType').value, loc: document.getElementById('fireLocation').value, car: document.getElementById('fireVehicles').value, res: document.getElementById('fireStatus').value, role: document.getElementById('fireRole').value||'未填', photo: document.getElementById('firePhotoData').value, tactics: document.getElementById('fireTacticsData').value });
         }
         function saveEms(e) {
             e.preventDefault(); if(!document.getElementById('emsType').value) return alert('請選擇種類');
             const gcs = `E${document.getElementById('gcsE').value}V${document.getElementById('gcsV').value}M${document.getElementById('gcsM').value}`;
-            saveLog({
-                id: Date.now(), cat: 'ems', date: document.getElementById('emsDate').value,
-                type: document.getElementById('emsType').value, loc: document.getElementById('emsLocation').value,
-                main: document.getElementById('emsReason').value, to: document.getElementById('emsHospital').value,
-                note: document.getElementById('emsNote').value, 
-                vitals: `GCS:${gcs.length>3?gcs:'-'} SpO2:${document.getElementById('vitalSpo2').value||'-'} BP:${document.getElementById('vitalBp').value||'-'}`,
-                role: document.getElementById('emsRole').value || '未填',
-                photo: document.getElementById('emsPhotoData').value,
-                rosc: document.getElementById('isRosc').checked
-            });
+            saveLog({ id: Date.now(), cat: 'ems', date: document.getElementById('emsDate').value, type: document.getElementById('emsType').value, loc: document.getElementById('emsLocation').value, main: document.getElementById('emsReason').value, to: document.getElementById('emsHospital').value, note: document.getElementById('emsNote').value, vitals: `GCS:${gcs.length>3?gcs:'-'} SpO2:${document.getElementById('vitalSpo2').value||'-'} BP:${document.getElementById('vitalBp').value||'-'}`, role: document.getElementById('emsRole').value||'未填', photo: document.getElementById('emsPhotoData').value, rosc: document.getElementById('isRosc').checked });
         }
-        function saveLog(l) {
-            logs.unshift(l); try { localStorage.setItem('fireLogPro', JSON.stringify(logs)); document.querySelectorAll('input:not([type=hidden])').forEach(i=>i.value=''); document.querySelectorAll('textarea').forEach(i=>i.value=''); switchView('viewDashboard'); } 
-            catch(e){ alert('空間不足，請備份後刪除舊資料'); logs.shift(); }
-        }
+        function saveLog(l) { logs.unshift(l); try { localStorage.setItem('fireLogPro', JSON.stringify(logs)); document.querySelectorAll('input:not([type=hidden])').forEach(i=>i.value=''); document.querySelectorAll('textarea').forEach(i=>i.value=''); switchView('viewDashboard'); } catch(e){ alert('空間不足，請備份後刪除舊資料'); logs.shift(); } }
 
-        // === 歷史與統計 ===
         function updateDashboard() {
             document.getElementById('dashTotal').innerText = logs.length;
             document.getElementById('dashFire').innerText = logs.filter(l=>l.cat==='fire').length;
             document.getElementById('dashEms').innerText = logs.filter(l=>l.cat==='ems').length;
             const list = document.getElementById('recentList'); list.innerHTML='';
-            logs.slice(0,3).forEach(l => {
-                const c = l.cat==='fire'?'text-red-500':'text-teal-500';
-                list.innerHTML+=`<div class="bg-white p-2 rounded border border-slate-100 flex justify-between shadow-sm dark:bg-slate-800 dark:border-slate-700"><div class="flex items-center gap-3"><i class="fa-solid fa-circle text-[8px] ${c}"></i><div><div class="font-bold text-sm text-slate-700 dark:text-slate-200">${l.type}</div><div class="text-[10px] text-slate-400 font-mono">${l.date.slice(5,10)}</div></div></div></div>`;
-            });
+            logs.slice(0,3).forEach(l => { const c=l.cat==='fire'?'text-red-500':'text-teal-500'; list.innerHTML+=`<div class="bg-white p-2 rounded border border-slate-100 flex justify-between shadow-sm dark:bg-slate-800 dark:border-slate-700"><div class="flex items-center gap-3"><i class="fa-solid fa-circle text-[8px] ${c}"></i><div><div class="font-bold text-sm text-slate-700 dark:text-slate-200">${l.type}</div><div class="text-[10px] text-slate-400 font-mono">${l.date.slice(5,10)}</div></div></div></div>`; });
         }
 
         function renderList() {
-            const list = document.getElementById('historyList');
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const month = document.getElementById('monthFilter').value;
+            const list = document.getElementById('historyList'); const search = document.getElementById('searchInput').value.toLowerCase(); const month = document.getElementById('monthFilter').value;
             list.innerHTML = ''; list.className = isEditMode ? 'space-y-3 edit-mode' : 'space-y-3';
-            const filtered = logs.filter(l => {
-                if(currentFilter!=='all' && l.cat!==currentFilter) return false;
-                if(month && !l.date.startsWith(month)) return false;
-                return JSON.stringify(l).toLowerCase().includes(search);
-            });
-            const nFire = filtered.filter(l=>l.cat==='fire').length;
-            const nEms = filtered.filter(l=>l.cat==='ems').length;
-            const nRosc = filtered.filter(l=>l.rosc).length;
+            const filtered = logs.filter(l => { if(currentFilter!=='all' && l.cat!==currentFilter)return false; if(month && !l.date.startsWith(month))return false; return JSON.stringify(l).toLowerCase().includes(search); });
+            const nFire = filtered.filter(l=>l.cat==='fire').length; const nEms = filtered.filter(l=>l.cat==='ems').length; const nRosc = filtered.filter(l=>l.rosc).length;
             document.getElementById('historyStatsBar').innerHTML = `<span>總計: ${filtered.length}</span><span>🔥 ${nFire}</span><span>🚑 ${nEms}</span><span class="text-red-400">❤️ ${nRosc}</span>`;
             if(filtered.length === 0) { list.innerHTML='<div class="text-center text-gray-400 mt-10">無資料</div>'; return; }
             filtered.forEach(log => {
-                const d = new Date(log.date);
-                const ds = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-                const clr = log.cat==='fire' ? 'border-red-500' : 'border-teal-500';
-                const tag = log.cat==='fire' ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400';
+                const d = new Date(log.date); const ds = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                const clr = log.cat==='fire' ? 'border-red-500' : 'border-teal-500'; const tag = log.cat==='fire' ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400';
                 const desc = log.cat==='fire' ? `${log.car||'-'} | ${log.res}` : `${log.main||'-'} > ${log.to||'-'}`;
                 const sel = selectedIds.has(log.id) ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500' : 'bg-white dark:bg-slate-800 dark:border-slate-700';
-                const roscIcon = log.rosc ? '<i class="fa-solid fa-heart text-red-500 ml-1 animate-pulse"></i>' : '';
-                list.innerHTML += `<div onclick="handleItemClick(${log.id})" class="log-card p-3 rounded border-l-4 ${clr} shadow-sm relative cursor-pointer transition ${sel}"><div class="check-overlay absolute inset-0 bg-white/50 items-center justify-end pr-4 ${selectedIds.has(log.id)?'opacity-100':'opacity-0 hover:opacity-100'} dark:bg-black/50"><div class="w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center ${selectedIds.has(log.id)?'bg-blue-500 border-blue-500':''}"><i class="fa-solid fa-check text-white text-xs"></i></div></div><div class="flex justify-between mb-1"><span class="${tag} text-[10px] px-1 rounded font-bold uppercase">${log.type} ${roscIcon}</span><span class="text-xs font-mono text-slate-400">${ds}</span></div><div class="font-bold text-slate-800 dark:text-slate-200">${log.loc}</div><div class="text-xs text-slate-500 mt-1 truncate dark:text-slate-400">${desc}</div>${(log.photo||log.tactics)?'<div class="absolute top-2 right-2 text-slate-300"><i class="fa-solid fa-paperclip"></i></div>':''}</div>`;
+                list.innerHTML += `<div onclick="handleItemClick(${log.id})" class="log-card p-3 rounded border-l-4 ${clr} shadow-sm relative cursor-pointer transition ${sel}"><div class="check-overlay absolute inset-0 bg-white/50 items-center justify-end pr-4 ${selectedIds.has(log.id)?'opacity-100':'opacity-0 hover:opacity-100'} dark:bg-black/50"><div class="w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center ${selectedIds.has(log.id)?'bg-blue-500 border-blue-500':''}"><i class="fa-solid fa-check text-white text-xs"></i></div></div><div class="flex justify-between mb-1"><span class="${tag} text-[10px] px-1 rounded font-bold uppercase">${log.type} ${log.rosc?'<i class="fa-solid fa-heart text-red-500 ml-1"></i>':''}</span><span class="text-xs font-mono text-slate-400">${ds}</span></div><div class="font-bold text-slate-800 dark:text-slate-200">${log.loc}</div><div class="text-xs text-slate-500 mt-1 truncate dark:text-slate-400">${desc}</div>${(log.photo||log.tactics)?'<div class="absolute top-2 right-2 text-slate-300"><i class="fa-solid fa-paperclip"></i></div>':''}</div>`;
             });
         }
 
         function handleItemClick(id) { if(isEditMode) { if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id); renderList(); document.getElementById('selectCount').innerText = selectedIds.size; } else { showDetail(id); } }
         
         function showDetail(id) {
-            const l = logs.find(log => log.id === id); currentDetailLog = l;
-            const ds = new Date(l.date).toLocaleString('zh-TW');
-            const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.loc)}`;
-            
+            const l = logs.find(log => log.id === id); currentDetailLog = l; const ds = new Date(l.date).toLocaleString('zh-TW'); const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.loc)}`;
             let tacticsHtml = '';
             if(l.tactics) {
-                const tacData = JSON.parse(l.tactics);
-                const icons = {'empty':'','house':'<i class="fa-solid fa-house icon-house"></i>','factory':'<i class="fa-solid fa-industry icon-factory"></i>','grass':'<i class="fa-solid fa-tree icon-grass"></i>','fire':'<i class="fa-solid fa-fire icon-fire"></i>','smoke':'<i class="fa-solid fa-cloud icon-smoke"></i>','car':'<i class="fa-solid fa-truck icon-car"></i>','water':'<i class="fa-solid fa-faucet-drip icon-water"></i>','hydrant':'<i class="fa-solid fa-fire-hydrant icon-hydrant"></i>','victim':'<i class="fa-solid fa-person-falling icon-victim"></i>','ems':'<i class="fa-solid fa-truck-medical icon-ems"></i>'};
-                let gridStr = '';
-                tacData.forEach(type => gridStr += `<div class="tac-cell">${icons[type]||''}</div>`);
+                const tacData = JSON.parse(l.tactics); const icons = {'empty':'','house':'<i class="fa-solid fa-house icon-house"></i>','factory':'<i class="fa-solid fa-industry icon-factory"></i>','grass':'<i class="fa-solid fa-tree icon-grass"></i>','fire':'<i class="fa-solid fa-fire icon-fire"></i>','smoke':'<i class="fa-solid fa-cloud icon-smoke"></i>','car':'<i class="fa-solid fa-truck icon-car"></i>','water':'<i class="fa-solid fa-faucet-drip icon-water"></i>','hydrant':'<i class="fa-solid fa-fire-hydrant icon-hydrant"></i>','victim':'<i class="fa-solid fa-person-falling icon-victim"></i>','ems':'<i class="fa-solid fa-truck-medical icon-ems"></i>'};
+                let gridStr = ''; tacData.forEach(type => gridStr += `<div class="tac-cell">${icons[type]||''}</div>`);
                 tacticsHtml = `<div class="mt-4"><div class="text-xs text-slate-400 mb-1">戰術佈署圖</div><div class="tac-wrapper"><div class="tac-grid">${gridStr}</div></div></div>`;
             }
-
             let h = '';
-            if(l.cat === 'fire') {
-                h = `${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}
-                    <div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold text-red-500">火警 - ${l.type}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div><div><div class="text-xs text-slate-400">我的任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div><div><div class="text-xs text-slate-400">車輛</div><div>${l.car||'無'}</div></div><div><div class="text-xs text-slate-400">結果</div><div class="font-bold text-red-600 dark:text-red-400">${l.res}</div></div></div>
-                    ${tacticsHtml}`;
-            } else {
-                h = `${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}
-                    <div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold flex items-center gap-1 text-teal-500">救護 - ${l.type} ${l.rosc?'<i class="fa-solid fa-heart text-red-500"></i>':''}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div><div class="col-span-2 bg-slate-50 p-2 rounded border dark:bg-slate-700 dark:border-slate-600"><div class="text-xs text-slate-400">生命徵象</div><div class="font-mono font-bold">${l.vitals}</div></div><div><div class="text-xs text-slate-400">我的任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div><div><div class="text-xs text-slate-400">主訴</div><div>${l.main||'-'}</div></div><div><div class="text-xs text-slate-400">送往</div><div>${l.to||'-'}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">備註/處置</div><div class="text-slate-600 dark:text-slate-400">${l.note||'無'}</div></div></div>`;
-            }
-            document.getElementById('detailContent').innerHTML = h;
-            document.getElementById('viewDetail').classList.remove('hidden');
+            if(l.cat === 'fire') { h = `${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}<div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold text-red-500">火警 - ${l.type}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div><div><div class="text-xs text-slate-400">任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div><div><div class="text-xs text-slate-400">車輛</div><div>${l.car||'無'}</div></div><div><div class="text-xs text-slate-400">結果</div><div class="font-bold text-red-600 dark:text-red-400">${l.res}</div></div></div>${tacticsHtml}`; } 
+            else { h = `${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}<div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold flex items-center gap-1 text-teal-500">救護 - ${l.type} ${l.rosc?'<i class="fa-solid fa-heart text-red-500"></i>':''}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div><div class="col-span-2 bg-slate-50 p-2 rounded border dark:bg-slate-700 dark:border-slate-600"><div class="text-xs text-slate-400">生命徵象</div><div class="font-mono font-bold">${l.vitals}</div></div><div><div class="text-xs text-slate-400">任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div><div><div class="text-xs text-slate-400">主訴</div><div>${l.main||'-'}</div></div><div><div class="text-xs text-slate-400">送往</div><div>${l.to||'-'}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">備註/處置</div><div class="text-slate-600 dark:text-slate-400">${l.note||'無'}</div></div></div>`; }
+            document.getElementById('detailContent').innerHTML = h; document.getElementById('viewDetail').classList.remove('hidden');
         }
         function closeDetail() { document.getElementById('viewDetail').classList.add('hidden'); }
-        
-        function copyDetail() {
-            const l = currentDetailLog; if(!l) return;
-            const t = l.cat==='fire' 
-                ? `【火警案件】\n時間：${l.date.replace('T',' ')}\n地點：${l.loc}\n類型：${l.type}\n任務：${l.role}\n車輛：${l.car}\n狀況：${l.res}`
-                : `【救護案件】\n時間：${l.date.replace('T',' ')}\n地點：${l.loc}\n類型：${l.type}${l.rosc?' (ROSC)':''}\n任務：${l.role}\n主訴：${l.main}\n送往：${l.to}\n徵象：${l.vitals}\n備註：${l.note}`;
-            navigator.clipboard.writeText(t).then(()=>alert('已複製文字摘要！'));
-        }
+        function copyDetail() { const l=currentDetailLog; if(!l)return; const t = l.cat==='fire' ? `【火警】${l.date.replace('T',' ')}\n${l.loc}\n類型：${l.type}\n任務：${l.role}\n狀況：${l.res}` : `【救護】${l.date.replace('T',' ')}\n${l.loc}\n類型：${l.type}${l.rosc?'(ROSC)':''}\n主訴：${l.main}\n送往：${l.to}`; navigator.clipboard.writeText(t).then(()=>alert('已複製')); }
 
         function toggleEditMode() { isEditMode=!isEditMode; updateEditUI(); selectedIds.clear(); renderList(); }
-        function updateEditUI() { 
-            const b=document.getElementById('editToggleBtn'), a=document.getElementById('batchAction');
-            if(isEditMode){ b.classList.replace('bg-blue-50','bg-slate-800'); b.classList.replace('text-blue-600','text-white'); b.innerHTML='<i class="fa-solid fa-check"></i> 完成'; a.classList.remove('hidden'); }
-            else { b.classList.replace('bg-slate-800','bg-blue-50'); b.classList.replace('text-white','text-blue-600'); b.innerHTML='<i class="fa-solid fa-list-check"></i> 編輯'; a.classList.add('hidden'); }
-        }
-        function deleteSelected() {
-            if(selectedIds.size===0) return alert('未選擇');
-            if(confirm(`刪除 ${selectedIds.size} 筆紀錄？`)) {
-                logs=logs.filter(l=>!selectedIds.has(l.id)); localStorage.setItem('fireLogPro',JSON.stringify(logs));
-                toggleEditMode(); renderList(); updateDashboard();
-            }
-        }
-        function filterType(t,b) {
-            currentFilter=t; document.querySelectorAll('.filter-btn').forEach(btn=>{btn.classList.remove('bg-slate-700','text-white');btn.classList.add('bg-white','text-slate-600')});
-            b.classList.remove('bg-white','text-slate-600'); b.classList.add('bg-slate-700','text-white'); renderList();
-        }
-
-        function exportData() {
-            const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(logs));
-            a.download=`FireLog_Backup_${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove();
-        }
-        function exportCSV() {
-            if(logs.length===0) return alert('無資料');
-            let csv = "\uFEFF日期,時間,類別,細項,任務,地點,主訴/結果,送往/車輛,備註\n";
-            logs.forEach(l => {
-                const dt = l.date.split('T');
-                const row = [dt[0], dt[1], l.cat==='fire'?'火警':'救護', l.type + (l.rosc?'(ROSC)':''), l.role, `"${l.loc}"`, l.cat==='fire'?l.res:l.main, l.cat==='fire'?l.car:l.to, `"${l.cat==='ems'?l.note:''}"`];
-                csv += row.join(",") + "\n";
-            });
-            const a=document.createElement('a'); a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-            a.download=`FireLog_Export_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); a.remove();
-        }
-        function triggerImport(){document.getElementById('importFile').click();}
-        function importData(inp){
-            const f=inp.files[0]; if(!f)return;
-            const r=new FileReader(); r.onload=e=>{
-                try{ const d=JSON.parse(e.target.result); if(confirm(`還原 ${d.length} 筆資料？`)){logs=d;localStorage.setItem('fireLogPro',JSON.stringify(logs));location.reload();} }
-                catch(err){alert('檔案錯誤');}
-            }; r.readAsText(f);
-        }
-    </script>
-</body>
-</html>
+        function updateEditUI() { const b=document.getElementById('editToggleBtn'), a=document.getElementById('batchAction'); if(isEditMode){ b.classList.replace('bg-blue-50','bg-slate-800'); b.classList.replace('text-blue-600','text-white'); b.innerHTML='<i class="fa-solid fa-check"></i> 完成'; a.classList.remove('hidden'); } else { b.classList.replace('bg-slate-800','bg-blue-50'); b.classList.replace('text-white','text-blue-600'); b.innerHTML='<i class="fa-solid fa-list-check"></i> 編輯'; a.classList.add('hidden'); } }
+        function deleteSelected() { if(selectedIds.size===0) return alert('未選擇'); if(confirm(`刪除 ${selectedIds.size} 筆紀錄？`)) { logs=logs.filter(l=>!selectedIds.has(
