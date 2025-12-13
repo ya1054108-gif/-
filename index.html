@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FireLog Pro v9.0</title>
+    <title>FireLog Pro v9.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
-        tailwind.config = { darkMode: 'class' }
+        try { tailwind.config = { darkMode: 'class' } } catch(e) {}
     </script>
 
     <style>
         /* 系統基礎 */
         body { 
-            font-family: 'Inter', sans-serif; 
+            font-family: 'Inter', -apple-system, sans-serif; 
             user-select: none; 
             -webkit-tap-highlight-color: transparent; 
             padding-bottom: 120px !important; 
@@ -28,34 +28,6 @@
         .view-panel { display: none; }
         .view-panel.active { display: block; animation: fadeIn 0.25s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* 自由戰術板 (Free Roam) */
-        .tac-container {
-            width: 100%;
-            height: 350px;
-            background-color: #334155;
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            overflow: hidden;
-            border-radius: 8px;
-            border: 2px solid #475569;
-            touch-action: none; /* 防止滑動地圖時捲動頁面 */
-        }
-        .tac-item {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            font-size: 2rem;
-            cursor: grab;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-            z-index: 10;
-            touch-action: none;
-        }
-        .tac-item:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.2); z-index: 20; }
-        .bg-placeholder {
-            position: absolute; inset: 0; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; color: #64748b; pointer-events: none;
-        }
 
         /* 底部導航 */
         .nav-bar {
@@ -73,23 +45,65 @@
         .nav-btn.active { color: #3b82f6; }
         .dark .nav-btn.active { color: #60a5fa; }
 
-        /* 元件樣式 */
+        /* 按鈕與輸入框 */
         .sys-btn { border: 1px solid #e2e8f0; background: white; color: #475569; transition: all 0.1s; }
+        .sys-btn:active { transform: scale(0.95); }
         .sys-btn.active { background: #334155; color: white; border-color: #334155; font-weight: 700; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
         .dark body { background-color: #020617; color: #f8fafc; }
         .dark .sys-btn { background: #1e293b; border-color: #475569; color: #94a3b8; }
         .dark .sys-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
         .dark input, .dark textarea, .dark select { background-color: #0f172a !important; border-color: #475569 !important; color: #f1f5f9 !important; }
-        
-        /* 戰術圖示 */
+        .dark input::placeholder { color: #64748b; }
+
+        /* 自由戰術板 (Free Roam) */
+        .tac-container {
+            width: 100%;
+            height: 350px;
+            background-color: #334155;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            border: 2px solid #475569;
+            touch-action: none;
+        }
+        .tac-item {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            font-size: 1.8rem;
+            cursor: grab;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+            z-index: 10;
+            touch-action: none;
+        }
+        .tac-item:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.2); z-index: 20; }
+        .bg-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; pointer-events: none; }
+
+        /* 戰術圖示顏色定義 */
         .icon-fire { color: #ef4444; animation: pulse 1s infinite; }
         .icon-water { color: #3b82f6; }
-        .icon-car { color: #f87171; }
+        .icon-car { color: #f87171; text-shadow: 0 0 3px black; }
         .icon-ems { color: #34d399; }
         .icon-victim { color: #facc15; animation: bounce 1s infinite; }
         .icon-hydrant { color: #fbbf24; }
+        .icon-nozzle { color: #60a5fa; filter: drop-shadow(0 0 5px #2563eb); } /* 渦輪瞄子 */
+        .icon-hose { color: #94a3b8; font-size: 1.2rem; transform: rotate(45deg); } /* 水帶 */
+
         @keyframes pulse { 0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); } }
         @keyframes bounce { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-50%, -55%); } }
+
+        /* Toast */
+        .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-100px); background: #1e293b; color: white; padding: 12px 24px; rounded: 99px; font-size: 0.95rem; font-weight: bold; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); z-index: 100; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(20px); }
+        
+        /* ROSC Toggle (修復版) */
+        .toggle-wrapper { position: relative; width: 44px; height: 24px; }
+        .toggle-checkbox { opacity: 0; width: 0; height: 0; }
+        .toggle-label { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+        .toggle-label:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #ef4444; }
+        .toggle-checkbox:checked + .toggle-label:before { transform: translateX(20px); }
 
         /* 編輯與預覽 */
         .check-overlay { display: none; }
@@ -97,21 +111,22 @@
         .edit-mode .log-card { transform: scale(0.96); opacity: 0.8; }
         .photo-preview { background-size: cover; background-position: center; }
         
-        /* 模態視窗 */
-        .modal-base {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 60;
-            display: flex; flex-direction: column;
-        }
+        .modal-base { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 60; display: flex; flex-direction: column; }
         .modal-base.hidden { display: none; }
+        
+        .tag-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+
+    <!-- Toast -->
+    <div id="toast" class="toast"><i class="fa-solid fa-circle-check text-green-400"></i> <span id="toastMsg">操作成功</span></div>
 
     <!-- Header -->
     <div class="glass-header bg-white/90 text-slate-800 p-3 sticky top-0 z-40 shadow-sm border-b border-slate-200 flex justify-between items-center backdrop-blur dark:bg-slate-900/90 dark:text-white dark:border-slate-800">
         <div class="flex items-center gap-2">
             <div class="w-2 h-6 bg-red-600 rounded-sm shadow-sm"></div>
-            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v9.0</span></h1>
+            <h1 class="font-bold tracking-wider text-sm">FIRE COMMAND <span class="text-xs opacity-50 font-mono">v9.1</span></h1>
         </div>
         <div class="flex items-center gap-3">
             <button onclick="toggleTheme()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
@@ -122,7 +137,7 @@
     <div id="viewDashboard" class="view-panel active container mx-auto p-4 max-w-lg">
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 mb-4 relative overflow-hidden">
             <div class="absolute top-0 right-0 p-4 opacity-10 dark:opacity-5"><i class="fa-solid fa-chart-pie text-6xl"></i></div>
-            <div class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">System Status</div>
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">Total Statistics</div>
             <div class="flex justify-between items-end relative z-10">
                 <div><div class="text-4xl font-mono font-bold text-slate-800 dark:text-white tracking-tight" id="dashTotal">0</div><div class="text-xs text-slate-500 font-bold mt-1">案件總數</div></div>
                 <div class="text-right space-y-1">
@@ -156,25 +171,24 @@
                     <div class="col-span-3"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Location</label><div class="flex gap-2"><input type="text" id="fireLocation" placeholder="地點" class="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-lg text-sm shadow-sm" required><button type="button" onclick="getGPS('fireLocation')" class="bg-slate-200 dark:bg-slate-700 px-3 rounded-lg text-slate-600 dark:text-slate-300 shadow-sm"><i class="fa-solid fa-location-crosshairs"></i></button></div></div>
                 </div>
                 
-                <!-- 自由戰術板按鈕 -->
                 <button type="button" onclick="openTacticsEditor()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow transition border border-slate-600">
                     <i class="fa-solid fa-map"></i> 自由戰術沙盤 (可匯入空拍圖)
                 </button>
                 <div id="tacticsStatus" class="text-xs text-green-500 font-bold text-center hidden mt-1"><i class="fa-solid fa-check-circle mr-1"></i>已儲存戰術圖</div>
                 <input type="hidden" id="fireTacticsData">
-                <input type="hidden" id="fireMapBg"> <!-- 存底圖 -->
+                <input type="hidden" id="fireMapBg">
 
                 <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">My Role</label><input type="hidden" id="fireRole"><div class="grid grid-cols-4 gap-2"><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-3 rounded-lg text-xs font-bold">瞄子手</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-3 rounded-lg text-xs font-bold">副瞄子</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-3 rounded-lg text-xs font-bold">帶隊官</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-3 rounded-lg text-xs font-bold">司機</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-3 rounded-lg text-xs font-bold">搜救</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-3 rounded-lg text-xs font-bold">水源</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-3 rounded-lg text-xs font-bold">傳令</button><button type="button" onclick="setBtn(this, 'fireRole')" class="sys-btn p-3 rounded-lg text-xs font-bold">其他</button></div></div>
                 <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Type</label><input type="hidden" id="fireType"><div class="grid grid-cols-2 gap-2"><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded-lg text-sm text-left font-medium">住宅火警</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded-lg text-sm text-left font-medium">工廠倉庫</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded-lg text-sm text-left font-medium">雜草廢棄物</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded-lg text-sm text-left font-medium">車輛火警</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded-lg text-sm text-left font-medium">高層建築</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded-lg text-sm text-left font-medium">誤報/謊報</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded-lg text-sm text-left font-medium">船舶航空</button><button type="button" onclick="setBtn(this, 'fireType')" class="sys-btn p-3 rounded-lg text-sm text-left font-medium">其他</button></div></div>
                 <div class="grid grid-cols-2 gap-3"><div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vehicles</label><input type="text" id="fireVehicles" placeholder="11, 91" class="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-mono uppercase shadow-sm"></div><div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label><select id="fireStatus" class="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 shadow-sm"><option value="成災">成災</option><option value="未成災">未成災</option><option value="誤報">誤報</option><option value="查看">查看</option></select></div></div>
                 
-                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Photo (含浮水印)</label><div class="flex items-center gap-3"><label class="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"><i class="fa-solid fa-camera text-slate-400 text-2xl mb-1"></i><input type="file" accept="image/*" class="hidden" onchange="handlePhoto(this, 'firePhotoPreview', 'firePhotoData', 'fireLocation')"></label><div id="firePhotoPreview" class="w-24 h-24 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 photo-preview hidden relative shadow-sm"><button type="button" onclick="clearPhoto('firePhotoPreview', 'firePhotoData'); event.stopPropagation();" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow"><i class="fa-solid fa-xmark text-xs"></i></button></div><input type="hidden" id="firePhotoData"></div></div>
+                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Photo</label><div class="flex items-center gap-3"><label class="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"><i class="fa-solid fa-camera text-slate-400 text-2xl mb-1"></i><input type="file" accept="image/*" class="hidden" onchange="handlePhoto(this, 'firePhotoPreview', 'firePhotoData', 'fireLocation')"></label><div id="firePhotoPreview" class="w-24 h-24 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 photo-preview hidden relative shadow-sm"><button type="button" onclick="clearPhoto('firePhotoPreview', 'firePhotoData'); event.stopPropagation();" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow"><i class="fa-solid fa-xmark text-xs"></i></button></div><input type="hidden" id="firePhotoData"></div></div>
                 <button type="submit" class="w-full py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg hover:bg-red-700 active:scale-95 transition">確認儲存</button>
             </form>
         </div>
     </div>
 
-    <!-- 3. EMS View -->
+    <!-- 3. EMS View (ROSC 修復) -->
     <div id="viewEms" class="view-panel container mx-auto p-4 max-w-lg">
         <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-heart-pulse text-teal-500"></i> 救護登錄</h2>
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
@@ -183,24 +197,39 @@
                     <div class="flex-1"><input type="datetime-local" id="emsDate" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono shadow-sm"></div>
                     <button type="button" onclick="setNow('emsDate')" class="bg-slate-200 dark:bg-slate-700 px-3 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 shadow-sm">NOW</button>
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="emsLocation" placeholder="地點" class="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-lg text-xs shadow-sm" required>
-                    <button type="button" onclick="getGPS('emsLocation')" class="bg-slate-200 dark:bg-slate-700 px-3 rounded-lg text-slate-600 dark:text-slate-300 shadow-sm"><i class="fa-solid fa-location-crosshairs"></i></button>
-                </div>
+                <div class="flex gap-2"><input type="text" id="emsLocation" placeholder="地點" class="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-lg text-xs shadow-sm" required><button type="button" onclick="getGPS('emsLocation')" class="bg-slate-200 dark:bg-slate-700 px-3 rounded-lg text-slate-600 dark:text-slate-300 shadow-sm"><i class="fa-solid fa-location-crosshairs"></i></button></div>
                 
                 <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">My Role</label><input type="hidden" id="emsRole"><div class="flex gap-2"><button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-3 rounded-lg text-xs font-bold text-center">主手</button><button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-3 rounded-lg text-xs font-bold text-center">副手</button><button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-3 rounded-lg text-xs font-bold text-center">駕駛</button><button type="button" onclick="setBtn(this, 'emsRole')" class="sys-btn flex-1 p-3 rounded-lg text-xs font-bold text-center">實習</button></div></div>
-                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Case Type</label><input type="hidden" id="emsType"><div class="flex flex-wrap gap-2"><button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">內科急病</button><button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">車禍 (MVA)</button><button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">一般創傷</button><button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">路倒</button><button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">OHCA</button><button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">急產</button><button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">精神</button></div></div>
-                <div id="roscSection" class="hidden bg-red-50 p-3 rounded-lg border border-red-100 flex justify-between items-center dark:bg-red-900/20 dark:border-red-800"><span class="text-sm font-bold text-red-700 flex items-center gap-2 dark:text-red-400"><i class="fa-solid fa-heart-pulse"></i> ROSC (恢復心跳)</span><div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"><input type="checkbox" name="isRosc" id="isRosc" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300"/><label for="isRosc" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer dark:bg-slate-600"></label></div></div>
-                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3 dark:bg-slate-900 dark:border-slate-700"><div class="flex items-center gap-3"><span class="text-xs font-bold w-8 text-slate-500">GCS</span><div class="flex-1 flex gap-2"><input type="text" id="gcsE" placeholder="E" class="w-1/3 p-2 text-center border rounded text-xs font-mono" maxlength="1"><input type="text" id="gcsV" placeholder="V" class="w-1/3 p-2 text-center border rounded text-xs font-mono" maxlength="1"><input type="text" id="gcsM" placeholder="M" class="w-1/3 p-2 text-center border rounded text-xs font-mono" maxlength="1"></div></div><div class="flex gap-2"><div class="flex-1"><div class="text-[10px] text-gray-400 mb-1">SpO2</div><input type="number" id="vitalSpo2" placeholder="%" class="w-full p-2 border rounded text-sm font-mono text-center"></div><div class="flex-1"><div class="text-[10px] text-gray-400 mb-1">BP</div><input type="text" id="vitalBp" placeholder="/" class="w-full p-2 border rounded text-sm font-mono text-center"></div><div class="flex-1"><div class="text-[10px] text-gray-400 mb-1">HR</div><input type="number" id="vitalHr" placeholder="bpm" class="w-full p-2 border rounded text-sm font-mono text-center"></div></div></div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Case Type</label>
+                    <input type="hidden" id="emsType">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">內科急病</button>
+                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">車禍 (MVA)</button>
+                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">一般創傷</button>
+                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">路倒</button>
+                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">OHCA</button>
+                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">急產</button>
+                        <button type="button" onclick="setEmsType(this)" class="sys-btn ems-tag rounded-full px-3 py-1 font-medium">精神</button>
+                    </div>
+                </div>
                 
+                <!-- ROSC Section (Fixed HTML) -->
+                <div id="roscSection" class="hidden bg-red-50 p-3 rounded-lg border border-red-100 flex justify-between items-center dark:bg-red-900/20 dark:border-red-800 transition-all">
+                    <span class="text-sm font-bold text-red-700 flex items-center gap-2 dark:text-red-400"><i class="fa-solid fa-heart-pulse"></i> ROSC (恢復心跳)</span>
+                    <div class="toggle-wrapper">
+                        <input type="checkbox" id="isRosc" class="toggle-checkbox">
+                        <label for="isRosc" class="toggle-label"></label>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3 dark:bg-slate-900 dark:border-slate-700"><div class="flex items-center gap-3"><span class="text-xs font-bold w-8 text-slate-500">GCS</span><div class="flex-1 flex gap-2"><input type="text" id="gcsE" placeholder="E" class="w-1/3 p-2 text-center border rounded text-xs font-mono" maxlength="1"><input type="text" id="gcsV" placeholder="V" class="w-1/3 p-2 text-center border rounded text-xs font-mono" maxlength="1"><input type="text" id="gcsM" placeholder="M" class="w-1/3 p-2 text-center border rounded text-xs font-mono" maxlength="1"></div></div><div class="flex gap-2"><div class="flex-1"><div class="text-[10px] text-gray-400 mb-1">SpO2</div><input type="number" id="vitalSpo2" placeholder="%" class="w-full p-2 border rounded text-sm font-mono text-center"></div><div class="flex-1"><div class="text-[10px] text-gray-400 mb-1">BP</div><input type="text" id="vitalBp" placeholder="/" class="w-full p-2 border rounded text-sm font-mono text-center"></div><div class="flex-1"><div class="text-[10px] text-gray-400 mb-1">HR</div><input type="number" id="vitalHr" placeholder="bpm" class="w-full p-2 border rounded text-sm font-mono text-center"></div></div></div>
                 <div>
                     <div class="flex gap-2 mb-2"><input type="text" id="emsReason" placeholder="主訴" class="flex-1 p-3 border border-slate-200 dark:border-slate-700 rounded-lg text-sm shadow-sm"><input type="text" id="emsHospital" placeholder="送往醫院" class="w-1/3 p-3 border border-slate-200 dark:border-slate-700 rounded-lg text-sm shadow-sm"></div>
-                    <!-- 快速罐頭模組按鈕 (NEW) -->
                     <button type="button" onclick="openEmsTemplates()" class="w-full py-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-bold mb-2 flex items-center justify-center gap-2"><i class="fa-solid fa-list-ul"></i> 匯入罐頭處置與耗材</button>
                     <textarea id="emsNote" rows="3" class="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-lg text-sm shadow-sm" placeholder="備註..."></textarea>
                 </div>
-                
-                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Photo (含浮水印)</label><div class="flex items-center gap-3"><label class="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"><i class="fa-solid fa-camera text-slate-400 text-2xl mb-1"></i><input type="file" accept="image/*" class="hidden" onchange="handlePhoto(this, 'emsPhotoPreview', 'emsPhotoData', 'emsLocation')"></label><div id="emsPhotoPreview" class="w-24 h-24 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 photo-preview hidden relative shadow-sm"><button type="button" onclick="clearPhoto('emsPhotoPreview', 'emsPhotoData'); event.stopPropagation();" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow"><i class="fa-solid fa-xmark text-xs"></i></button></div><input type="hidden" id="emsPhotoData"></div></div>
+                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Photo</label><div class="flex items-center gap-3"><label class="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"><i class="fa-solid fa-camera text-slate-400 text-2xl mb-1"></i><input type="file" accept="image/*" class="hidden" onchange="handlePhoto(this, 'emsPhotoPreview', 'emsPhotoData', 'emsLocation')"></label><div id="emsPhotoPreview" class="w-24 h-24 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 photo-preview hidden relative shadow-sm"><button type="button" onclick="clearPhoto('emsPhotoPreview', 'emsPhotoData'); event.stopPropagation();" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow"><i class="fa-solid fa-xmark text-xs"></i></button></div><input type="hidden" id="emsPhotoData"></div></div>
                 <button type="submit" class="w-full py-4 bg-teal-600 text-white rounded-xl font-bold shadow-lg hover:bg-teal-700 active:scale-95 transition">確認儲存</button>
             </form>
         </div>
@@ -268,28 +297,24 @@
     <div id="viewTacticsEditor" class="modal-base hidden">
         <div class="p-3 bg-slate-800 text-white flex justify-between items-center border-b border-slate-700"><h3 class="font-bold">戰術沙盤 (自由拖曳)</h3><button onclick="closeTactics()" class="text-slate-400 p-2"><i class="fa-solid fa-xmark text-lg"></i></button></div>
         <div class="flex-1 flex flex-col items-center justify-center p-4 bg-slate-900 overflow-hidden relative">
-            
             <div class="flex justify-between w-full max-w-[350px] mb-2 px-1">
                 <button onclick="rotateWind()" class="text-xs text-blue-400 font-bold border border-blue-800 bg-blue-900/30 px-2 py-1 rounded"><i class="fa-solid fa-compass mr-1"></i> 風向: <span id="windDisplay">無</span></button>
-                <select id="floorSelect" class="bg-slate-800 text-white text-xs border border-slate-600 rounded px-2 outline-none">
-                    <option value="1F">1F</option><option value="2F">2F</option><option value="3F">3F</option><option value="RF">RF</option><option value="B1">B1</option>
-                </select>
+                <select id="floorSelect" class="bg-slate-800 text-white text-xs border border-slate-600 rounded px-2 outline-none"><option value="1F">1F</option><option value="2F">2F</option><option value="3F">3F</option><option value="RF">RF</option><option value="B1">B1</option></select>
             </div>
-
-            <!-- 沙盤區域 -->
+            <!-- 沙盤 -->
             <div class="tac-container" id="tacContainer">
                 <div class="bg-placeholder"><i class="fa-solid fa-map text-4xl mb-2"></i><span class="text-xs">可上傳底圖或直接拖曳圖示</span></div>
-                <!-- Icons injected here -->
             </div>
-
             <!-- 工具列 -->
             <div class="w-full max-w-[350px] mt-3">
-                <div class="flex gap-2 p-2 bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-x-auto">
+                <div class="flex gap-3 p-3 bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-x-auto">
                     <button onclick="addTacticalIcon('fire')" class="min-w-[40px] h-10 rounded bg-red-900/50 text-red-500 border border-red-900 flex items-center justify-center"><i class="fa-solid fa-fire"></i></button>
                     <button onclick="addTacticalIcon('smoke')" class="min-w-[40px] h-10 rounded bg-slate-600 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-cloud"></i></button>
                     <button onclick="addTacticalIcon('car')" class="min-w-[40px] h-10 rounded bg-red-100 text-red-600 flex items-center justify-center"><i class="fa-solid fa-truck"></i></button>
                     <button onclick="addTacticalIcon('water')" class="min-w-[40px] h-10 rounded bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-faucet-drip"></i></button>
                     <button onclick="addTacticalIcon('hydrant')" class="min-w-[40px] h-10 rounded bg-yellow-100 text-yellow-600 flex items-center justify-center"><i class="fa-solid fa-fire-hydrant"></i></button>
+                    <button onclick="addTacticalIcon('nozzle')" class="min-w-[40px] h-10 rounded bg-blue-900 text-blue-400 border border-blue-700 flex items-center justify-center"><i class="fa-solid fa-bullseye"></i></button>
+                    <button onclick="addTacticalIcon('hose')" class="min-w-[40px] h-10 rounded bg-slate-700 text-slate-400 flex items-center justify-center"><i class="fa-solid fa-route"></i></button>
                     <button onclick="addTacticalIcon('victim')" class="min-w-[40px] h-10 rounded bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-person-falling"></i></button>
                     <button onclick="addTacticalIcon('ems')" class="min-w-[40px] h-10 rounded bg-teal-100 text-teal-600 flex items-center justify-center"><i class="fa-solid fa-truck-medical"></i></button>
                 </div>
@@ -302,7 +327,7 @@
         <div class="p-4 bg-slate-800 border-t border-slate-700 sticky bottom-0"><button onclick="saveTactics()" class="w-full py-3 bg-blue-600 text-white rounded font-bold">儲存圖面</button></div>
     </div>
 
-    <!-- 7. 救護罐頭訊息 (EMS Templates) -->
+    <!-- 7. EMS Templates -->
     <div id="viewEmsTemplate" class="modal-base hidden justify-end sm:justify-center items-center">
         <div class="bg-white dark:bg-slate-800 w-full max-w-lg h-[60vh] sm:h-auto rounded-t-2xl sm:rounded-xl shadow-2xl flex flex-col animate-[slideUp_0.3s_ease-out]">
             <div class="p-4 border-b dark:border-slate-700 flex justify-between items-center"><h3 class="font-bold text-slate-700 dark:text-white">快速匯入描述</h3><button onclick="closeEmsTemplate()" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button></div>
@@ -324,7 +349,7 @@
         </div>
     </div>
 
-    <!-- 8. 詳細頁面 -->
+    <!-- 8. Detail View -->
     <div id="viewDetail" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-[60] hidden flex items-end sm:items-center justify-center">
         <div class="bg-white w-full max-w-lg h-[90vh] sm:h-auto sm:rounded-xl rounded-t-xl overflow-y-auto shadow-2xl relative animate-[slideUp_0.3s_ease-out] dark:bg-slate-800">
             <div class="sticky top-0 bg-white/95 backdrop-blur border-b p-4 flex justify-between items-center z-10 dark:bg-slate-800/95 dark:border-slate-700"><h3 class="font-bold text-slate-800 text-lg dark:text-white">案件詳情</h3><button onclick="closeDetail()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300"><i class="fa-solid fa-xmark"></i></button></div>
@@ -337,10 +362,7 @@
         let logs = []; try { logs = JSON.parse(localStorage.getItem('fireLogPro')) || []; } catch(e) { localStorage.removeItem('fireLogPro'); }
         let currentFilter = 'all', isEditMode = false, selectedIds = new Set(), currentDetailLog = null, isDark = localStorage.getItem('fireLogTheme') === 'dark';
         
-        // 戰術變數
-        let tacIcons = []; // {type, x, y, id}
-        let tacBg = '';
-        let currentWind = 0;
+        let tacIcons = []; let tacBg = ''; let currentWind = 0;
         const windDirs = ['N','NE','E','SE','S','SW','W','NW']; const windArrows = ['⬆','↗','➡','↘','⬇','↙','⬅','↖'];
 
         window.onload = () => { if(isDark) document.documentElement.classList.add('dark'); updateThemeIcon(); updateTime(); updateDashboard(); setInterval(updateTime, 1000); document.getElementById('monthFilter').value = new Date().toISOString().slice(0, 7); };
@@ -359,14 +381,14 @@
             if(viewId === 'viewFire' || viewId === 'viewEms') {
                 const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 const t = now.toISOString().slice(0,16);
-                if(viewId === 'viewFire') { document.getElementById('fireDate').value = t; clearPhoto('firePhotoPreview', 'firePhotoData'); document.querySelectorAll('#viewFire .sys-btn').forEach(b => b.classList.remove('active')); document.getElementById('fireTacticsData').value = ''; document.getElementById('tacticsStatus').classList.add('hidden'); tacIcons = []; tacBg = ''; }
+                if(viewId === 'viewFire') { document.getElementById('fireDate').value = t; clearPhoto('firePhotoPreview', 'firePhotoData'); document.querySelectorAll('#viewFire .sys-btn').forEach(b => b.classList.remove('active')); document.getElementById('fireTacticsData').value = ''; document.getElementById('tacticsStatus').classList.add('hidden'); tacIcons=[]; tacBg=''; }
                 if(viewId === 'viewEms') { document.getElementById('emsDate').value = t; clearPhoto('emsPhotoPreview', 'emsPhotoData'); document.getElementById('roscSection').classList.add('hidden'); document.getElementById('isRosc').checked = false; document.querySelectorAll('#viewEms .sys-btn').forEach(b => b.classList.remove('active')); }
             }
             if(viewId === 'viewHistory') renderList(); 
             if(viewId === 'viewDashboard') updateDashboard();
         }
 
-        // === 自由戰術板 (Free Roam) ===
+        // === Free Roam Tactics ===
         function openTacticsEditor() {
             const existing = document.getElementById('fireTacticsData').value;
             const container = document.getElementById('tacContainer');
@@ -378,13 +400,9 @@
                 tacBg = data.bg || '';
                 currentWind = data.wind || 0;
                 document.getElementById('floorSelect').value = data.floor || '1F';
-            } else {
-                tacIcons = []; tacBg = ''; currentWind = 0;
-            }
+            } else { tacIcons = []; tacBg = ''; currentWind = 0; }
             
-            if(tacBg) container.style.backgroundImage = `url(${tacBg})`;
-            else container.style.backgroundImage = 'none';
-            
+            if(tacBg) container.style.backgroundImage = `url(${tacBg})`; else container.style.backgroundImage = 'none';
             tacIcons.forEach(icon => renderTacItem(icon));
             updateWindDisplay();
             document.getElementById('viewTacticsEditor').classList.remove('hidden');
@@ -392,8 +410,7 @@
 
         function addTacticalIcon(type) {
             const icon = { id: Date.now(), type: type, x: 50, y: 50 };
-            tacIcons.push(icon);
-            renderTacItem(icon);
+            tacIcons.push(icon); renderTacItem(icon);
         }
 
         function renderTacItem(icon) {
@@ -402,70 +419,38 @@
             el.className = `tac-item icon-${icon.type}`;
             el.id = `tac-${icon.id}`;
             el.innerHTML = getIconHtml(icon.type);
-            el.style.left = icon.x + '%';
-            el.style.top = icon.y + '%';
+            el.style.left = icon.x + '%'; el.style.top = icon.y + '%';
             
-            // Drag Logic
             let isDragging = false;
-            const startDrag = (e) => {
-                isDragging = true;
-                e.preventDefault(); // Stop scroll
-            };
+            const startDrag = (e) => { isDragging = true; e.preventDefault(); };
             const onDrag = (e) => {
                 if(!isDragging) return;
                 const rect = container.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                let x = ((clientX - rect.left) / rect.width) * 100;
-                let y = ((clientY - rect.top) / rect.height) * 100;
-                // Constraints
-                x = Math.max(0, Math.min(100, x));
-                y = Math.max(0, Math.min(100, y));
-                
-                el.style.left = x + '%';
-                el.style.top = y + '%';
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                let x = ((cx - rect.left) / rect.width) * 100;
+                let y = ((cy - rect.top) / rect.height) * 100;
+                x = Math.max(0, Math.min(100, x)); y = Math.max(0, Math.min(100, y));
+                el.style.left = x + '%'; el.style.top = y + '%';
                 icon.x = x; icon.y = y;
             };
             const stopDrag = () => { isDragging = false; };
-            const onDblClick = () => {
-                if(confirm('刪除此圖示？')) {
-                    tacIcons = tacIcons.filter(i => i.id !== icon.id);
-                    el.remove();
-                }
-            };
+            const onDblClick = () => { if(confirm('刪除?')) { tacIcons = tacIcons.filter(i => i.id !== icon.id); el.remove(); } };
 
-            el.addEventListener('mousedown', startDrag);
-            el.addEventListener('touchstart', startDrag);
-            window.addEventListener('mousemove', onDrag);
-            window.addEventListener('touchmove', onDrag);
-            window.addEventListener('mouseup', stopDrag);
-            window.addEventListener('touchend', stopDrag);
+            el.addEventListener('mousedown', startDrag); el.addEventListener('touchstart', startDrag);
+            window.addEventListener('mousemove', onDrag); window.addEventListener('touchmove', onDrag);
+            window.addEventListener('mouseup', stopDrag); window.addEventListener('touchend', stopDrag);
             el.addEventListener('dblclick', onDblClick);
-
             container.appendChild(el);
         }
 
         function getIconHtml(type) {
-            const map = {'fire':'<i class="fa-solid fa-fire"></i>','smoke':'<i class="fa-solid fa-cloud"></i>','car':'<i class="fa-solid fa-truck"></i>','water':'<i class="fa-solid fa-faucet-drip"></i>','hydrant':'<i class="fa-solid fa-fire-hydrant"></i>','victim':'<i class="fa-solid fa-person-falling"></i>','ems':'<i class="fa-solid fa-truck-medical"></i>'};
+            const map = {'fire':'<i class="fa-solid fa-fire"></i>','smoke':'<i class="fa-solid fa-cloud"></i>','car':'<i class="fa-solid fa-truck"></i>','water':'<i class="fa-solid fa-faucet-drip"></i>','hydrant':'<i class="fa-solid fa-fire-hydrant"></i>','victim':'<i class="fa-solid fa-person-falling"></i>','ems':'<i class="fa-solid fa-truck-medical"></i>','nozzle':'<i class="fa-solid fa-bullseye"></i>','hose':'<i class="fa-solid fa-route"></i>'};
             return map[type];
         }
 
-        function loadTacBg(input) {
-            const file = input.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                tacBg = e.target.result;
-                document.getElementById('tacContainer').style.backgroundImage = `url(${tacBg})`;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function saveTactics() {
-            const data = { icons: tacIcons, bg: tacBg, wind: currentWind, floor: document.getElementById('floorSelect').value };
-            document.getElementById('fireTacticsData').value = JSON.stringify(data);
-            document.getElementById('tacticsStatus').classList.remove('hidden');
-            closeTactics();
-        }
+        function loadTacBg(input) { const f=input.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ tacBg=e.target.result; document.getElementById('tacContainer').style.backgroundImage=`url(${tacBg})`; }; r.readAsDataURL(f); }
+        function saveTactics() { const d={ icons: tacIcons, bg: tacBg, wind: currentWind, floor: document.getElementById('floorSelect').value }; document.getElementById('fireTacticsData').value=JSON.stringify(d); document.getElementById('tacticsStatus').classList.remove('hidden'); closeTactics(); }
         function closeTactics() { document.getElementById('viewTacticsEditor').classList.add('hidden'); }
         function clearTactics() { if(confirm('清空？')){ tacIcons=[]; tacBg=''; document.getElementById('tacContainer').innerHTML='<div class="bg-placeholder"><i class="fa-solid fa-map text-4xl mb-2"></i><span class="text-xs">可上傳底圖或直接拖曳圖示</span></div>'; document.getElementById('tacContainer').style.backgroundImage=''; } }
         function rotateWind() { currentWind = (currentWind+1)%8; updateWindDisplay(); }
@@ -474,13 +459,9 @@
         // === EMS Templates ===
         function openEmsTemplates() { document.getElementById('viewEmsTemplate').classList.remove('hidden'); }
         function closeEmsTemplate() { document.getElementById('viewEmsTemplate').classList.add('hidden'); }
-        function addTemplate(text) { 
-            const note = document.getElementById('emsNote');
-            note.value += (note.value ? '，' : '') + text;
-            showToast('已加入');
-        }
+        function addTemplate(text) { const n=document.getElementById('emsNote'); n.value+=(n.value?'，':'')+text; showToast('已加入'); }
 
-        // === 表單核心 ===
+        // === Logic ===
         function handlePhoto(input, prevId, dataId, locId) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -490,11 +471,10 @@
                     if(w>h){if(w>MAX){h*=MAX/w;w=MAX}}else{if(h>MAX){w*=MAX/h;h=MAX}}
                     cvs.width=w; cvs.height=h; const ctx=cvs.getContext('2d'); ctx.drawImage(img,0,0,w,h);
                     
-                    // Watermark
                     const nowStr = new Date().toLocaleString('zh-TW');
                     const locStr = document.getElementById(locId)?.value || 'UNK';
-                    ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; ctx.fillRect(0, h-30, w, 30);
-                    ctx.font = "12px sans-serif"; ctx.fillStyle = "#fff"; ctx.fillText(`${nowStr} | ${locStr}`, 10, h-10);
+                    ctx.fillStyle="rgba(0,0,0,0.5)"; ctx.fillRect(0,h-30,w,30);
+                    ctx.font="12px sans-serif"; ctx.fillStyle="#fff"; ctx.fillText(`${nowStr} | ${locStr}`,10,h-10);
 
                     const d = cvs.toDataURL('image/jpeg',0.5);
                     document.getElementById(dataId).value = d;
@@ -505,7 +485,13 @@
         }
         function clearPhoto(pid, did) { document.getElementById(did).value=''; document.getElementById(pid).classList.add('hidden'); }
         function setBtn(btn, id) { Array.from(btn.parentElement.children).forEach(c=>c.classList.remove('active')); btn.classList.add('active'); document.getElementById(id).value=btn.innerText; }
-        function setEmsType(btn) { setBtn(btn, 'emsType'); const r=document.getElementById('roscSection'); if(btn.innerText==='OHCA') r.classList.remove('hidden'); else {r.classList.add('hidden'); document.getElementById('isRosc').checked=false;} }
+        
+        function setEmsType(btn) {
+            setBtn(btn, 'emsType');
+            const r = document.getElementById('roscSection');
+            if(btn.innerText.trim() === 'OHCA') { r.classList.remove('hidden'); } 
+            else { r.classList.add('hidden'); document.getElementById('isRosc').checked = false; }
+        }
         function appendNote(t) { const n=document.getElementById('emsNote'); n.value+=(n.value?' ':'')+t; }
         function getGPS(id){ if(!navigator.geolocation) return alert('無法定位'); navigator.geolocation.getCurrentPosition(p=>{const c=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`;const i=document.getElementById(id);i.value=i.value?i.value+` (${c})`:c;},e=>alert('定位失敗')); }
         function setNow(id){ const now=new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset()); document.getElementById(id).value=now.toISOString().slice(0,16); }
@@ -519,9 +505,8 @@
             const gcs = `E${document.getElementById('gcsE').value}V${document.getElementById('gcsV').value}M${document.getElementById('gcsM').value}`;
             saveLog({ id: Date.now(), cat: 'ems', date: document.getElementById('emsDate').value, type: document.getElementById('emsType').value, loc: document.getElementById('emsLocation').value, main: document.getElementById('emsReason').value, to: document.getElementById('emsHospital').value, note: document.getElementById('emsNote').value, vitals: `GCS:${gcs.length>3?gcs:'-'} SpO2:${document.getElementById('vitalSpo2').value||'-'} BP:${document.getElementById('vitalBp').value||'-'}`, role: document.getElementById('emsRole').value||'未填', photo: document.getElementById('emsPhotoData').value, rosc: document.getElementById('isRosc').checked });
         }
-        function saveLog(l) { try { logs.unshift(l); localStorage.setItem('fireLogPro', JSON.stringify(logs)); document.querySelectorAll('input:not([type=hidden])').forEach(i=>i.value=''); document.querySelectorAll('textarea').forEach(i=>i.value=''); showToast('儲存成功'); switchView('viewDashboard'); } catch(e) { logs.shift(); alert('空間不足，請刪除舊資料'); } }
+        function saveLog(l) { try { logs.unshift(l); localStorage.setItem('fireLogPro', JSON.stringify(logs)); document.querySelectorAll('input:not([type=hidden])').forEach(i=>i.value=''); document.querySelectorAll('textarea').forEach(i=>i.value=''); showToast('儲存成功'); switchView('viewDashboard'); } catch(e) { logs.shift(); alert('空間不足'); } }
 
-        // === 列表與統計 ===
         function updateDashboard() {
             document.getElementById('dashTotal').innerText = logs.length; document.getElementById('dashFire').innerText = logs.filter(l=>l.cat==='fire').length; document.getElementById('dashEms').innerText = logs.filter(l=>l.cat==='ems').length;
             const list = document.getElementById('recentList'); list.innerHTML='';
@@ -554,19 +539,9 @@
                 const wind = data.wind || 0;
                 const floor = data.floor || '1F';
                 const windStr = `${windArrows[wind]} ${windDirs[wind]}`;
-                
                 let iconHtml = '';
-                icons.forEach(i => {
-                    iconHtml += `<div style="position:absolute;left:${i.x}%;top:${i.y}%;transform:translate(-50%,-50%);font-size:1.5rem;" class="icon-${i.type}">${getIconHtml(i.type)}</div>`;
-                });
-                
-                tacticsHtml = `
-                    <div class="mt-4 bg-slate-800 p-3 rounded-lg">
-                        <div class="flex justify-between text-xs text-slate-400 mb-2"><span>${floor} 戰術圖</span><span>風向: ${windStr}</span></div>
-                        <div style="width:100%;height:250px;background-color:#334155;background-image:url(${bg});background-size:cover;background-position:center;position:relative;border-radius:4px;overflow:hidden;">
-                            ${iconHtml}
-                        </div>
-                    </div>`; 
+                icons.forEach(i => { iconHtml += `<div style="position:absolute;left:${i.x}%;top:${i.y}%;transform:translate(-50%,-50%);font-size:1.5rem;" class="icon-${i.type}">${getIconHtml(i.type)}</div>`; });
+                tacticsHtml = `<div class="mt-4 bg-slate-800 p-3 rounded-lg"><div class="flex justify-between text-xs text-slate-400 mb-2"><span>${floor} 戰術圖</span><span>風向: ${windStr}</span></div><div style="width:100%;height:250px;background-color:#334155;background-image:url(${bg});background-size:cover;background-position:center;position:relative;border-radius:4px;overflow:hidden;">${iconHtml}</div></div>`; 
             }
             let h = '';
             if(l.cat === 'fire') { h = `${l.photo ? `<img src="${l.photo}" class="w-full h-48 object-cover rounded-lg mb-4 border dark:border-slate-600">` : ''}<div class="grid grid-cols-2 gap-4 text-sm dark:text-slate-300"><div><div class="text-xs text-slate-400">類型</div><div class="font-bold text-red-500">火警 - ${l.type}</div></div><div><div class="text-xs text-slate-400">時間</div><div class="font-mono">${ds}</div></div><div class="col-span-2"><div class="text-xs text-slate-400">地點</div><a href="${mapLink}" target="_blank" class="font-bold text-lg text-blue-600 hover:underline dark:text-blue-400">${l.loc} <i class="fa-solid fa-map-location-dot ml-1 text-sm"></i></a></div><div><div class="text-xs text-slate-400">任務</div><div class="font-bold bg-slate-100 inline-block px-2 rounded dark:bg-slate-700">${l.role}</div></div><div><div class="text-xs text-slate-400">車輛</div><div>${l.car||'無'}</div></div><div><div class="text-xs text-slate-400">結果</div><div class="font-bold text-red-600 dark:text-red-400">${l.res}</div></div></div>${tacticsHtml}`; } 
@@ -585,7 +560,6 @@
         function exportCSV() { if(logs.length===0) return alert('無資料'); let csv="\uFEFF日期,時間,類別,細項,任務,地點,主訴/結果,送往/車輛,備註\n"; logs.forEach(l=>{ const dt=l.date.split('T'); const row=[dt[0], dt[1], l.cat==='fire'?'火警':'救護', l.type+(l.rosc?'(ROSC)':''), l.role, `"${l.loc}"`, l.cat==='fire'?l.res:l.main, l.cat==='fire'?l.car:l.to, `"${l.cat==='ems'?l.note:''}"`]; csv+=row.join(",")+"\n"; }); const a=document.createElement('a'); a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv); a.download=`FireLog_Export.csv`; document.body.appendChild(a); a.click(); a.remove(); }
         function triggerImport(){document.getElementById('importFile').click();}
         function importData(inp){ const f=inp.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ try{ const d=JSON.parse(e.target.result); if(confirm(`還原 ${d.length} 筆資料？`)){logs=d;localStorage.setItem('fireLogPro',JSON.stringify(logs));location.reload();} } catch(err){alert('檔案錯誤');} }; r.readAsText(f); }
-        
         function calcScba() { const v=document.getElementById('scbaVol').value, b=document.getElementById('scbaBar').value; if(!b)return alert('請輸入壓力'); const m=Math.floor((v*b)/40); document.getElementById('scbaResult').innerHTML=`極限: ${m}分 <span class="text-xs opacity-50">|</span> 安全: ${Math.max(0,m-10)}分`; document.getElementById('scbaResult').classList.remove('hidden'); }
         function calcWater() { const t=document.getElementById('waterTon').value, f=document.getElementById('waterFlow').value; if(!t||!f)return alert('請輸入數值'); document.getElementById('waterResult').innerText=`約 ${(t*1000/f).toFixed(1)} 分鐘`; document.getElementById('waterResult').classList.remove('hidden'); }
     </script>
